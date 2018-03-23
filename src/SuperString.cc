@@ -4,6 +4,7 @@
 
 // std
 #include <iostream> // The only thing we need, and just for printing
+#include <SuperString.hh>
 
 /*-- definitions --*/
 
@@ -89,6 +90,11 @@ SuperString SuperString::operator+(const SuperString &other) const {
     return SuperString(sequence);
 }
 
+SuperString SuperString::operator*(Size times) const {
+    MultipleSequence *sequence = new MultipleSequence(this->_sequence, times);
+    return SuperString(sequence);
+}
+
 SuperString &SuperString::operator=(const SuperString &other) {
     if(this != &other) {
         if(this->_sequence->refRelease() == 0) {
@@ -121,7 +127,7 @@ void SuperString::StringSequence::refAdd() {
     this->_refCount++;
 }
 
-Super::Size SuperString::StringSequence::refRelease() {
+SuperString::Size SuperString::StringSequence::refRelease() {
     return this->_refCount--;
 }
 
@@ -288,6 +294,7 @@ void SuperString::SubstringSequence::print(std::ostream &stream, SuperString::Si
 }
 
 SuperString SuperString::SubstringSequence::trim() const {
+    // TODO: General code, specify
     Size startIndex = 0;
     Size endIndex = this->length();
     Result<int, Error> result = this->codeUnitAt(startIndex);
@@ -302,6 +309,7 @@ SuperString SuperString::SubstringSequence::trim() const {
 }
 
 SuperString SuperString::SubstringSequence::trimLeft() const {
+    // TODO: General code, specify
     Size startIndex = 0;
     Result<int, Error> result = this->codeUnitAt(startIndex);
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
@@ -311,6 +319,7 @@ SuperString SuperString::SubstringSequence::trimLeft() const {
 }
 
 SuperString SuperString::SubstringSequence::trimRight() const {
+    // TODO: General code, specify
     Size endIndex = this->length();
     Result<int, Error> result = this->codeUnitAt(endIndex - 1);
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
@@ -415,6 +424,7 @@ void SuperString::ConcatenationSequence::print(std::ostream &stream, SuperString
 }
 
 SuperString SuperString::ConcatenationSequence::trim() const {
+    // TODO: General code, specify
     Size startIndex = 0;
     Size endIndex = this->length();
     Result<int, Error> result = this->codeUnitAt(startIndex);
@@ -429,6 +439,7 @@ SuperString SuperString::ConcatenationSequence::trim() const {
 }
 
 SuperString SuperString::ConcatenationSequence::trimLeft() const {
+    // TODO: General code, specify
     Size startIndex = 0;
     Result<int, Error> result = this->codeUnitAt(startIndex);
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
@@ -438,6 +449,131 @@ SuperString SuperString::ConcatenationSequence::trimLeft() const {
 }
 
 SuperString SuperString::ConcatenationSequence::trimRight() const {
+    // TODO: General code, specify
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(0, endIndex).ok(); // TODO:
+}
+
+//*-- MultipleSequence (internal)
+SuperString::MultipleSequence::MultipleSequence(const StringSequence *sequence, Size time) {
+    this->_kind = Kind::MULTIPLE;
+    this->_container._multiple._time = time;
+    this->_container._multiple._sequence = sequence;
+    void *ptr = ((void *) ((unsigned long) this->_container._multiple._sequence));
+    ((StringSequence *) ptr)->refAdd();
+}
+
+SuperString::MultipleSequence::~MultipleSequence() {
+    if(this->_kind == Kind::MULTIPLE) {
+        void *ptr = ((void *) ((unsigned long) this->_container._multiple._sequence));
+        if(((StringSequence *) ptr)->refRelease() == 0) {
+            delete ((StringSequence *) ptr);
+        }
+    }
+}
+
+SuperString::Size SuperString::MultipleSequence::length() const {
+    if(this->_kind == Kind::MULTIPLE) {
+        return this->_container._multiple._sequence->length() * this->_container._multiple._time;
+    }
+    // TODO:
+    return 0;
+}
+
+SuperString::Result<int, SuperString::Error> SuperString::MultipleSequence::codeUnitAt(SuperString::Size index) const {
+    if(this->_kind == Kind::MULTIPLE) {
+        Size length = this->length();
+        if(index < length) {
+            return this->_container._multiple._sequence->codeUnitAt(index % this->_container._multiple._sequence->length());
+        }
+        return Result<int, Error>(Error::RangeError);
+    }
+    // TODO:
+    return Result<int, Error>(Error::Unimplemented);
+}
+
+SuperString::Result<SuperString, SuperString::Error>
+SuperString::MultipleSequence::substring(SuperString::Size startIndex,
+                                         SuperString::Size endIndex) const {
+    Size length = this->length();
+    if(length < startIndex || length < endIndex) {
+        return Result<SuperString, Error>(Error::RangeError);
+    }
+    SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+    void *ptr = ((void *) ((unsigned long) &this->_referencers));
+    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
+    return Result<SuperString, Error>(SuperString(sequence));
+}
+
+void SuperString::MultipleSequence::print(std::ostream &stream) const {
+    if(this->_kind == Kind::MULTIPLE) {
+        for(Size i = 0; i < this->_container._multiple._time; i++) {
+            this->_container._multiple._sequence->print(stream);
+        }
+    }
+}
+
+void SuperString::MultipleSequence::print(std::ostream &stream, SuperString::Size startIndex,
+                                          SuperString::Size endIndex) const {
+    if(this->_kind == Kind::MULTIPLE) {
+        Bool printing = FALSE;
+        Size unitLength = this->_container._multiple._sequence->length();
+        for(Size i = 0; i < this->_container._multiple._time; i++) {
+            Size iterationStartIndex = i * unitLength;
+            Size iterationEndIndex = (i + 1) * unitLength;
+            if(printing == FALSE) {
+                if(iterationStartIndex <= startIndex) {
+                    if(endIndex < iterationEndIndex) {
+                        this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
+                                                                    endIndex - iterationStartIndex);
+                        break;
+                    } else {
+                        printing = TRUE;
+                        this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
+                                                                    unitLength);
+                    }
+                }
+            } else {
+                if(endIndex <= iterationEndIndex) {
+                    this->_container._multiple._sequence->print(stream, 0, endIndex - iterationStartIndex);
+                }
+            }
+        }
+    }
+    // TODO:
+}
+
+SuperString SuperString::MultipleSequence::trim() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(startIndex, endIndex).ok(); // TODO:
+}
+
+SuperString SuperString::MultipleSequence::trimLeft() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    return this->substring(startIndex, this->length()).ok(); // TODO:
+}
+
+SuperString SuperString::MultipleSequence::trimRight() const {
+    // TODO: General code, specify
     Size endIndex = this->length();
     Result<int, Error> result = this->codeUnitAt(endIndex - 1);
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {

@@ -36,8 +36,6 @@ public:
     //*-- Result<T, E>
     /**
      * `Result<T, E>` is the type used for returning and propagating errors.
-     * @tparam T
-     * @tparam E
      */
     template<class T, class E>
     class Result {
@@ -177,6 +175,12 @@ public:
     SuperString operator+(const SuperString &other) const;
 
     /**
+     * Creates a new string by concatenating this string with itself a
+     * number of [times].
+     */
+    SuperString operator*(Size times) const;
+
+    /**
      * Assigns [other] to this string.
      */
     SuperString &operator=(const SuperString &other);
@@ -286,10 +290,19 @@ private:
 
         virtual void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
 
+        /**
+         * Returns the sequence without any leading and trailing whitespace.
+         */
         virtual SuperString trim() const = 0;
 
+        /**
+         * Returns the string without any leading whitespace.
+         */
         virtual SuperString trimLeft() const = 0;
 
+        /**
+         * Returns the string without any trailing whitespace.
+         */
         virtual SuperString trimRight() const = 0;
 
     private:
@@ -371,11 +384,11 @@ private:
 
         void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        virtual SuperString trim() const /*override*/;
+        SuperString trim() const /*override*/;
 
-        virtual SuperString trimLeft() const /*override*/;
+        SuperString trimLeft() const /*override*/;
 
-        virtual SuperString trimRight() const /*override*/;
+        SuperString trimRight() const /*override*/;
     };
 
     //*-- SubstringSequence (internal)
@@ -421,11 +434,11 @@ private:
 
         void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        virtual SuperString trim() const /*override*/;
+        SuperString trim() const /*override*/;
 
-        virtual SuperString trimLeft() const /*override*/;
+        SuperString trimLeft() const /*override*/;
 
-        virtual SuperString trimRight() const /*override*/;
+        SuperString trimRight() const /*override*/;
     };
 
     //*-- ConcatenationSequence (internal)
@@ -470,11 +483,60 @@ private:
 
         void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        virtual SuperString trim() const /*override*/;
+        SuperString trim() const /*override*/;
 
-        virtual SuperString trimLeft() const /*override*/;
+        SuperString trimLeft() const /*override*/;
 
-        virtual SuperString trimRight() const /*override*/;
+        SuperString trimRight() const /*override*/;
+    };
+
+    //*-- MultipleSequence (internal)
+    class MultipleSequence: public ReferenceStringSequence {
+    private:
+        enum class Kind {
+            MULTIPLE,
+            CONTENTED
+        };
+        Kind _kind;
+        union {
+            struct {
+                Size _time;
+                const StringSequence *_sequence;
+            } _multiple;
+            struct {
+
+            } _contented;
+        } _container;
+
+    public:
+        //*- Constructors
+
+        MultipleSequence(const StringSequence *sequence, Size time);
+
+        //*- Destructor
+
+        ~MultipleSequence();
+
+        //*- Getters
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        void print(std::ostream &stream) const /*override*/;
+
+        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
     };
 
     inline static SuperString::Bool isWhiteSpace(int codeUnit);
