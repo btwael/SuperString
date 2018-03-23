@@ -4,7 +4,6 @@
 
 // std
 #include <iostream> // The only thing we need, and just for printing
-#include <SuperString.hh>
 
 /*-- definitions --*/
 
@@ -34,6 +33,25 @@ SuperString::Size SuperString::length() const {
     if(this->_sequence != NULL) {
         return this->_sequence->length();
     }
+    return 0;
+}
+
+int SuperString::compareTo(const SuperString &other) const {
+    Size thisLength = this->length();
+    Size otherLength = other.length();
+    Size len = (thisLength < otherLength) ? thisLength : otherLength;
+    for(int i = 0; i < len; i++) {
+        int thisCodeUnit = this->codeUnitAt(i).ok();
+        int otherCodeUnit = other.codeUnitAt(i).ok();
+        if(thisCodeUnit < otherCodeUnit) {
+            return -1;
+        }
+        if(thisCodeUnit > otherCodeUnit) {
+            return 1;
+        }
+    }
+    if(thisLength < otherLength) return -1;
+    if(thisLength > otherLength) return 1;
     return 0;
 }
 
@@ -104,6 +122,10 @@ SuperString &SuperString::operator=(const SuperString &other) {
         this->_sequence->refAdd();
     }
     return *this;
+}
+
+SuperString::Bool SuperString::operator==(const SuperString &other) const {
+    return this->compareTo(other) == 0;
 }
 
 SuperString SuperString::Const(const char *chars) {

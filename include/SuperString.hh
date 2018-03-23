@@ -135,6 +135,11 @@ public:
     SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const;
 
     /**
+     * Compares this to [other].
+     */
+    int compareTo(const SuperString &other) const;
+
+    /**
      * Returns the substring of this sequence that extends
      * from [startIndex], inclusive, to [endIndex], exclusive.
      */
@@ -184,6 +189,11 @@ public:
      * Assigns [other] to this string.
      */
     SuperString &operator=(const SuperString &other);
+
+    /**
+     * Returns `TRUE` if this is equal to [other].
+     */
+    SuperString::Bool operator==(const SuperString &other) const;
 
     //*- Statics
 
