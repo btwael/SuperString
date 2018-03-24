@@ -19,6 +19,26 @@
  */
 class SuperString {
 public:
+    //*-- Encoding
+    /**
+     * Supported encoding.
+     */
+    enum class Encoding {
+        ASCII,
+        UTF8
+    };
+
+    //*-- Error
+    /**
+     * Possible errors that SuperString methods can produce.
+     */
+    enum class Error {
+        Unimplemented, // temporary
+        Unexpected, // Something that never happen, Unreachable code
+        RangeError,
+        InvalidByteSequence
+    };
+
     //*-- Size
     /**
      * `Size` is an unsigned long type used to represent indexes and offsets..
@@ -89,14 +109,31 @@ public:
         SuperString::Result<T, E> &operator=(const SuperString::Result<T, E> &other);
     };
 
-    //*-- Error
-    /**
-     * Possible errors that SuperString methods can produce.
-     */
-    enum class Error {
-        Unimplemented, // temporary
-        Unexpected, // Something that never happen, Unreachable code
-        RangeError
+    //*-- Pair<T, U>
+    // TODO: comments this
+    template<class T, class U>
+    class Pair {
+    private:
+        T _0;
+        U _1;
+
+    public:
+        //*- Constructor
+        Pair();
+
+        Pair(T $0, U $1);
+
+        //*- Getters
+
+        T first() const;
+
+        U second() const;
+
+        //*- Setters
+
+        void first(T $0);
+
+        void second(U $1);
     };
 
     //*-- SuperString
@@ -198,9 +235,9 @@ public:
     //*- Statics
 
     /**
-     * Creates a const string for the given [chars].
+     * Creates a string for the given const [chars].
      */
-    static SuperString Const(const char *chars);
+    static SuperString Const(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
 private:
     // forward declaration
@@ -400,6 +437,53 @@ private:
 
         SuperString trimRight() const /*override*/;
     };
+
+    //*--ConstUTF8Sequence (internal)
+    class ConstUTF8Sequence: public StringSequence {
+    private:
+        const char *_chars;
+        SuperString::Size _length;
+        SuperString::Bool _lengthComputed;
+
+    public:
+        //*- Constructors
+
+        ConstUTF8Sequence(const char *chars);
+
+        //*- Destructor
+
+        ~ConstUTF8Sequence();
+
+        //*- Getters
+
+        // inherited: SuperString::Bool isEmpty() const;
+
+        // inherited: SuperString::Bool isNotEmpty() const;
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        void print(std::ostream &stream) const /*override*/;
+
+        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
+
+    private:
+        Result<SuperString::Pair<Size, Size>, SuperString::Error> _offsetOfRange(Size startIndex, Size endIndex) const;
+    };
+
+    // TODO: ConstUTF16Sequence
 
     //*-- SubstringSequence (internal)
     class SubstringSequence: public ReferenceStringSequence {
@@ -646,6 +730,39 @@ SuperString::Result<T, E> &SuperString::Result<T, E>::operator=(const SuperStrin
         }
     }
     return *this;
+}
+
+//*-- SuperString::Pair<T, U>
+template<class T, class U>
+SuperString::Pair<T, U>::Pair() {
+    // nothing go here
+}
+
+template<class T, class U>
+SuperString::Pair<T, U>::Pair(T $0, U $1)
+        : _0($0),
+          _1($1) {
+    // nothing go here
+}
+
+template<class T, class U>
+T SuperString::Pair<T, U>::first() const {
+    return this->_0;
+}
+
+template<class T, class U>
+U SuperString::Pair<T, U>::second() const {
+    return this->_1;
+}
+
+template<class T, class U>
+void SuperString::Pair<T, U>::first(T $0) {
+    this->_0 = $0;
+}
+
+template<class T, class U>
+void SuperString::Pair<T, U>::second(U $1) {
+    this->_1 = $1;
 }
 
 //*-- SuperString::SingleLinkedList<E> (internal)

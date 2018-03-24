@@ -7,8 +7,8 @@ SuperString func() {
 
 int main(int argc, char const *argv[])
 {
-    SuperString string = func();
-    string = string * 2;
-    std::cout << "-" << string.substring(1, 14).ok().trim() << "-";
+    SuperString string = SuperString::Const("  Приве́т नमस्ते שָׁלוֹם  ", SuperString::Encoding::UTF8);
+    SuperString string1 = SuperString::Const("wadel");
+    std::cout << string.trim();
     return 0;
 }

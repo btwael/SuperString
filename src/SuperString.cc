@@ -128,8 +128,17 @@ SuperString::Bool SuperString::operator==(const SuperString &other) const {
     return this->compareTo(other) == 0;
 }
 
-SuperString SuperString::Const(const char *chars) {
-    return SuperString(new SuperString::ConstASCIISequence(chars));
+SuperString SuperString::Const(const char *chars, SuperString::Encoding encoding) {
+    StringSequence *sequence = NULL;
+    switch(encoding) {
+        case Encoding::ASCII:
+            sequence = new SuperString::ConstASCIISequence(chars);
+            break;
+        case Encoding::UTF8:
+            sequence = new SuperString::ConstUTF8Sequence(chars);
+            break;
+    }
+    return SuperString(sequence);
 }
 
 //*-- SuperString::StringSequence (abstract|internal)
@@ -244,6 +253,173 @@ SuperString SuperString::ConstASCIISequence::trimRight() const {
         c = *(this->_chars + (--endIndex - 1));
     }
     return this->substring(0, endIndex).ok(); // TODO:
+}
+
+//*-- SuperString::ConstUTF8Sequence (internal)
+SuperString::ConstUTF8Sequence::ConstUTF8Sequence(const char *chars)
+        : _chars(chars),
+          _lengthComputed(SuperString::FALSE) {
+    // nothing go here
+}
+
+SuperString::ConstUTF8Sequence::~ConstUTF8Sequence() {
+    // nothing go here
+}
+
+SuperString::Size SuperString::ConstUTF8Sequence::length() const /*override*/ {
+    if(this->_lengthComputed == SuperString::FALSE) {
+        Size length = 0;
+        const unsigned char *pointer = (unsigned char *) this->_chars;
+        while(*pointer != '\0') {
+            if((*pointer & 0xf8) == 0xf0) { pointer += 4; }
+            else if((*pointer & 0xf0) == 0xe0) { pointer += 3; }
+            else if((*pointer & 0xe0) == 0xc0) { pointer += 2; }
+            else if((*pointer & 0x80) == 0x00) { pointer++; }
+            else return 0;
+            length++;
+        }
+        // I need to keep this method const
+        void *ptr = ((void *) ((unsigned long) &this->_lengthComputed));
+        *((Bool *) ptr) = SuperString::TRUE;
+        ptr = ((void *) ((unsigned long) &this->_length));
+        *((Size *) ptr) = length;
+    }
+    return this->_length;
+}
+
+SuperString::Result<int, SuperString::Error> SuperString::ConstUTF8Sequence::codeUnitAt(SuperString::Size index) const {
+    if(index < this->length()) {
+        Size i = 0;
+        const unsigned char *pointer = (unsigned char *) this->_chars;
+        while(*pointer != '\0') {
+            int codeUnit = 0;
+            int remainingBytes = 0;
+            if((*pointer & 0xf8) == 0xf0) {
+                codeUnit = *pointer & 0x07;
+                remainingBytes = 3;
+            } else if((*pointer & 0xf0) == 0xe0) {
+                codeUnit = *pointer & 0x0f;
+                remainingBytes = 2;
+            } else if((*pointer & 0xe0) == 0xc0) {
+                codeUnit = *pointer & 0x1f;
+                remainingBytes = 1;
+            } else if((*pointer & 0x80) == 0x00) {
+                codeUnit = *pointer;
+            } else {
+                return Result<int, SuperString::Error>(Error::InvalidByteSequence);
+            }
+            while(remainingBytes-- > 0) {
+                pointer++;
+                //remainingBytes--;
+                codeUnit = codeUnit << 6 | (*pointer & 0x3f);
+            }
+            if(i == index) {
+                return Result<int, SuperString::Error>(codeUnit);
+            }
+            pointer++;
+            i++;
+        }
+    }
+    return Result<int, SuperString::Error>(Error::RangeError);
+}
+
+SuperString::Result<SuperString, SuperString::Error>
+SuperString::ConstUTF8Sequence::substring(SuperString::Size startIndex,
+                                          SuperString::Size endIndex) const {
+    Size length = this->length();
+    if(length < startIndex || length < endIndex) {
+        return Result<SuperString, Error>(Error::RangeError);
+    }
+    SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+    void *ptr = ((void *) ((unsigned long) &this->_referencers));
+    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
+    return Result<SuperString, Error>(SuperString(sequence));
+}
+
+void SuperString::ConstUTF8Sequence::print(std::ostream &stream) const {
+    stream << this->_chars;
+}
+
+void SuperString::ConstUTF8Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+                                           SuperString::Size endIndex) const {
+    Result<Pair<Size, Size>, Error> result = this->_offsetOfRange(startIndex, endIndex);
+    if(result.isOk()) {
+        stream.write(this->_chars + result.ok().first(), result.ok().second() - result.ok().first());
+    }
+}
+
+SuperString SuperString::ConstUTF8Sequence::trim() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(startIndex, endIndex).ok(); // TODO:
+}
+
+SuperString SuperString::ConstUTF8Sequence::trimLeft() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    return this->substring(startIndex, this->length()).ok(); // TODO:
+}
+
+SuperString SuperString::ConstUTF8Sequence::trimRight() const {
+    // TODO: General code, specify
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(0, endIndex).ok(); // TODO:
+}
+
+SuperString::Result<SuperString::Pair<SuperString::Size, SuperString::Size>, SuperString::Error>
+SuperString::ConstUTF8Sequence::_offsetOfRange(
+        Size startIndex, Size endIndex) const {
+    Size i = 0;
+    Size startOffset, endOffset;
+    Bool first = FALSE, second = FALSE;
+    const unsigned char *pointer = (unsigned char *) this->_chars;
+    while(*pointer != '\0') {
+        if(!first) {
+            if(i == startIndex) {
+                first = TRUE;
+                startOffset = ((Size) pointer) - ((Size) this->_chars);
+            }
+        } else {
+            if(i == endIndex) {
+                second = TRUE;
+                endOffset = ((Size) pointer) - ((Size) this->_chars);
+                break;
+            }
+        }
+        if((*pointer & 0xf8) == 0xf0) { pointer += 4; }
+        else if((*pointer & 0xf0) == 0xe0) { pointer += 3; }
+        else if((*pointer & 0xe0) == 0xc0) { pointer += 2; }
+        else if((*pointer & 0x80) == 0x00) { pointer++; }
+        else return Result<Pair<Size, Size>, Error>(Error::InvalidByteSequence);
+        i++;
+    }
+    if(!second) {
+        if(i == endIndex) {
+            second = TRUE;
+            endOffset = ((Size) pointer) - ((Size) this->_chars);
+        }
+    }
+    if(first && second) {
+        return Result<Pair<Size, Size>, Error>(Pair<Size, Size>(startOffset, endOffset));
+    }
+    return Result<Pair<Size, Size>, Error>(Error::RangeError);
 }
 
 //*-- SuperString::SubstringSequence (internal)
@@ -510,7 +686,8 @@ SuperString::Result<int, SuperString::Error> SuperString::MultipleSequence::code
     if(this->_kind == Kind::MULTIPLE) {
         Size length = this->length();
         if(index < length) {
-            return this->_container._multiple._sequence->codeUnitAt(index % this->_container._multiple._sequence->length());
+            return this->_container._multiple._sequence->codeUnitAt(
+                    index % this->_container._multiple._sequence->length());
         }
         return Result<int, Error>(Error::RangeError);
     }
