@@ -141,6 +141,10 @@ SuperString SuperString::Const(const char *chars, SuperString::Encoding encoding
     return SuperString(sequence);
 }
 
+SuperString SuperString::Const(SuperString::Byte *bytes, SuperString::Encoding encoding) {
+    return SuperString::Const((char *) bytes, encoding);
+}
+
 //*-- SuperString::StringSequence (abstract|internal)
 SuperString::StringSequence::~StringSequence() {
     // nothing go here

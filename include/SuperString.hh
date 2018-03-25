@@ -39,6 +39,10 @@ public:
         InvalidByteSequence
     };
 
+    //*-- Byte
+    // TODO: comment this.
+    typedef unsigned char Byte;
+
     //*-- Size
     /**
      * `Size` is an unsigned long type used to represent indexes and offsets..
@@ -235,9 +239,11 @@ public:
     //*- Statics
 
     /**
-     * Creates a string for the given const [chars].
+     * Creates a string for the given const (char *) [chars].
      */
     static SuperString Const(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
+
+    static SuperString Const(SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
 private:
     // forward declaration
