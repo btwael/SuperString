@@ -4,6 +4,7 @@
 
 // std
 #include <iostream> // The only thing we need, and just for printing
+#include <SuperString.hh>
 
 /*-- definitions --*/
 
@@ -183,6 +184,26 @@ SuperString::Size SuperString::StringSequence::refRelease() {
     return this->_refCount--;
 }
 
+void SuperString::StringSequence::addReferencer(SuperString::ReferenceStringSequence *sequence) const {
+    StringSequence *self = (StringSequence *) (unsigned long) this;
+    self->_referencers.push(sequence);
+}
+
+void SuperString::StringSequence::removeReferencer(SuperString::ReferenceStringSequence *sequence) const {
+    StringSequence *self = (StringSequence *) (unsigned long) this;
+    self->_referencers.remove(sequence);
+}
+
+SuperString::Size SuperString::StringSequence::freeingCost() const {
+    Size cost = 0;
+    SingleLinkedList<ReferenceStringSequence *>::Node<ReferenceStringSequence *> *node = this->_referencers._head;
+    while(node != NULL) {
+        cost += node->_data->reconstructionCost();
+        node = node->_next;
+    }
+    return cost;
+}
+
 //*-- SuperString::ReferenceStringSequence (abstract|internal)
 SuperString::ReferenceStringSequence::~ReferenceStringSequence() {
     // nothing go here
@@ -276,6 +297,10 @@ SuperString SuperString::ConstASCIISequence::trimRight() const {
     return this->substring(0, endIndex).ok(); // TODO:
 }
 
+SuperString::Size SuperString::ConstASCIISequence::keepingCost() const {
+    return sizeof(ConstASCIISequence);
+}
+
 //*-- SuperString::CopyASCIISequence (internal)
 SuperString::CopyASCIISequence::CopyASCIISequence(const char *chars) {
     const char *pointer = chars;
@@ -364,6 +389,14 @@ SuperString SuperString::CopyASCIISequence::trimRight() const {
         c = *(this->_chars + (--endIndex - 1));
     }
     return this->substring(0, endIndex).ok(); // TODO:
+}
+
+SuperString::Size SuperString::CopyASCIISequence::keepingCost() const {
+    Size cost = sizeof(CopyASCIISequence);
+    if(this->_chars != NULL) {
+        cost += this->length() + 1;
+    }
+    return cost;
 }
 
 //*-- SuperString::ConstUTF8Sequence (internal)
@@ -494,31 +527,35 @@ SuperString SuperString::ConstUTF8Sequence::trimRight() const {
     return this->substring(0, endIndex).ok(); // TODO:
 }
 
+SuperString::Size SuperString::ConstUTF8Sequence::keepingCost() const {
+    return sizeof(ConstUTF8Sequence);
+}
+
 //*-- SuperString::CopyUTF8Sequence (internal)
 SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const char *chars)
-        : _lengthComputed(FALSE) {
-    Size memLength;
+        : _lengthComputed(FALSE),
+          _memLength(0) {
     const char *pointer = chars;
     while(*pointer != '\0') {
         pointer++;
     }
-    memLength = pointer - chars + 1;
-    this->_chars = new char[memLength];
-    for(Size i = 0; i < memLength; i++) {
+    this->_memLength = pointer - chars + 1;
+    this->_chars = new char[this->_memLength];
+    for(Size i = 0; i < this->_memLength; i++) {
         *(this->_chars + i) = *(chars + i);
     }
 }
 
 SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const SuperString::ConstUTF8Sequence *sequence)
-        : _lengthComputed(FALSE) {
-    Size memLength;
+        : _lengthComputed(FALSE),
+          _memLength(0) {
     const char *pointer = sequence->_chars;
     while(*pointer != '\0') {
         pointer++;
     }
-    memLength = pointer - sequence->_chars + 1;
-    this->_chars = new char[memLength];
-    for(Size i = 0; i < memLength; i++) {
+    this->_memLength = pointer - sequence->_chars + 1;
+    this->_chars = new char[this->_memLength];
+    for(Size i = 0; i < this->_memLength; i++) {
         *(this->_chars + i) = *(sequence->_chars + i);
     }
 }
@@ -642,6 +679,11 @@ SuperString SuperString::CopyUTF8Sequence::trimRight() const {
     return this->substring(0, endIndex).ok(); // TODO:
 }
 
+SuperString::Size SuperString::CopyUTF8Sequence::keepingCost() const {
+    Size cost = sizeof(CopyUTF8Sequence) + this->_memLength;
+    return cost;
+}
+
 // SuperString::_UTF8_offsetOfRange
 SuperString::Result<SuperString::Pair<SuperString::Size, SuperString::Size>, SuperString::Error>
 SuperString::_UTF8_offsetOfRange(const char *chars, Size startIndex, Size endIndex) {
@@ -688,16 +730,16 @@ SuperString::SubstringSequence::SubstringSequence(const StringSequence *sequence
     this->_container._substring._sequence = sequence;
     this->_container._substring._startIndex = startIndex;
     this->_container._substring._endIndex = endIndex;
-    void *ptr = ((void *) ((unsigned long) this->_container._substring._sequence));
-    ((StringSequence *) ptr)->refAdd();
+    //void *ptr = ((void *) ((unsigned long) this->_container._substring._sequence));
+    //((StringSequence *) ptr)->refAdd();
 }
 
 SuperString::SubstringSequence::~SubstringSequence() {
     if(this->_kind == Kind::SUBSTRING) {
-        void *ptr = ((void *) ((unsigned long) this->_container._substring._sequence));
-        if(((StringSequence *) ptr)->refRelease() == 0) {
-            delete ((StringSequence *) ptr);
-        }
+        //void *ptr = ((void *) ((unsigned long) this->_container._substring._sequence));
+        //if(((StringSequence *) ptr)->refRelease() == 0) {
+        //    delete ((StringSequence *) ptr);
+        //}
     }
 }
 
@@ -785,28 +827,43 @@ SuperString SuperString::SubstringSequence::trimRight() const {
     return this->substring(0, endIndex).ok(); // TODO:
 }
 
+SuperString::Size SuperString::SubstringSequence::keepingCost() const {
+    if(this->_kind == Kind::SUBSTRING) {
+        return sizeof(SubstringSequence) + this->_container._substring._sequence->keepingCost();
+    }
+    return 0;
+}
+
+SuperString::Size SuperString::SubstringSequence::reconstructionCost() const {
+    if(this->_kind == Kind::SUBSTRING) {
+        return sizeof(SubstringSequence) +
+               (this->_container._substring._endIndex - this->_container._substring._startIndex) * 2;
+    }
+    return 0;
+}
+
 //*-- SuperString::ConcatenationSequence (internal)
 SuperString::ConcatenationSequence::ConcatenationSequence(const StringSequence *leftSequence,
                                                           const StringSequence *rightSequence) {
     this->_kind = Kind::CONCATENATION;
     this->_container._concatenation._left = leftSequence;
     this->_container._concatenation._right = rightSequence;
-    void *ptr = ((void *) ((unsigned long) this->_container._concatenation._left));
-    ((StringSequence *) ptr)->refAdd();
-    ptr = ((void *) ((unsigned long) this->_container._concatenation._right));
-    ((StringSequence *) ptr)->refAdd();
+    //void *ptr = ((void *) ((unsigned long) this->_container._concatenation._left));
+    //((StringSequence *) ptr)->refAdd();
+    //ptr = ((void *) ((unsigned long) this->_container._concatenation._right));
+    //((StringSequence *) ptr)->refAdd();
 }
 
 SuperString::ConcatenationSequence::~ConcatenationSequence() {
     if(this->_kind == Kind::CONCATENATION) {
-        void *ptr = ((void *) ((unsigned long) this->_container._concatenation._left));
-        if(((StringSequence *) ptr)->refRelease() == 0) {
-            delete ((StringSequence *) ptr);
-        }
-        ptr = ((void *) ((unsigned long) this->_container._concatenation._right));
-        if(((StringSequence *) ptr)->refRelease() == 0) {
-            delete ((StringSequence *) ptr);
-        }
+        //void *ptr = ((void *) ((unsigned long) this->_container._concatenation._left));
+        //if(((StringSequence *) ptr)->refRelease() == 0) {
+        //    delete ((StringSequence *) ptr);
+        //}
+        //ptr = ((void *) ((unsigned long) this->_container._concatenation._right));
+        //if(((StringSequence *) ptr)->refRelease() == 0) {
+        //    delete ((StringSequence *) ptr);
+        //}
     }
 }
 
@@ -913,6 +970,22 @@ SuperString SuperString::ConcatenationSequence::trimRight() const {
         result = this->codeUnitAt(--endIndex - 1);
     }
     return this->substring(0, endIndex).ok(); // TODO:
+}
+
+SuperString::Size SuperString::ConcatenationSequence::keepingCost() const {
+    if(this->_kind == Kind::CONCATENATION) {
+        return sizeof(SubstringSequence) + this->_container._concatenation._left->keepingCost() +
+               this->_container._concatenation._right->keepingCost();
+    }
+    return 0;
+}
+
+SuperString::Size SuperString::ConcatenationSequence::reconstructionCost() const {
+    if(this->_kind == Kind::CONCATENATION) {
+        return sizeof(SubstringSequence) +
+               (this->_container._concatenation._left->length() + this->_container._concatenation._right->length()) * 2;
+    }
+    return 0;
 }
 
 //*-- MultipleSequence (internal)
@@ -1038,6 +1111,21 @@ SuperString SuperString::MultipleSequence::trimRight() const {
         result = this->codeUnitAt(--endIndex - 1);
     }
     return this->substring(0, endIndex).ok(); // TODO:
+}
+
+SuperString::Size SuperString::MultipleSequence::keepingCost() const {
+    if(this->_kind == Kind::MULTIPLE) {
+        return sizeof(SubstringSequence) + this->_container._multiple._sequence->keepingCost();
+    }
+    return 0;
+}
+
+SuperString::Size SuperString::MultipleSequence::reconstructionCost() const {
+    if(this->_kind == Kind::MULTIPLE) {
+        return sizeof(SubstringSequence) +
+               this->_container._multiple._sequence->length() * this->_container._multiple._time * 2;
+    }
+    return 0;
 }
 
 std::ostream &operator<<(std::ostream &stream, const SuperString &string) {

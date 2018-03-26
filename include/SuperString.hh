@@ -274,7 +274,7 @@ private:
     //*-- SingleLinkedList<E> (internal)
     template<class E>
     class SingleLinkedList {
-    private:
+    public:
         // forward declaration
         template<class Ei>
         class Node;
@@ -294,7 +294,8 @@ private:
 
         void push(E value);
 
-    private:
+        void remove(E value);
+
         template<class Ei>
         class Node {
         public:
@@ -371,12 +372,24 @@ private:
          */
         virtual SuperString trimRight() const = 0;
 
-    private:
-        //*- Methods
+        // TODO: comment
+        virtual SuperString::Size keepingCost() const = 0;
 
+        // TODO: comment
+        SuperString::Size freeingCost() const;
+
+        // TODO: comment
         void refAdd();
 
+        // TODO: comment
         SuperString::Size refRelease();
+
+        // TODO: comment
+        void addReferencer(SuperString::ReferenceStringSequence *sequence) const;
+
+        // TODO: comment
+        void removeReferencer(SuperString::ReferenceStringSequence *sequence) const;
+
 
         friend class SuperString;
     };
@@ -413,6 +426,13 @@ private:
         virtual SuperString trimLeft() const = 0 /*override*/;
 
         virtual SuperString trimRight() const = 0 /*override*/;
+
+        virtual SuperString::Size keepingCost() const = 0 /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
+
+        // TODO: comment
+        virtual SuperString::Size reconstructionCost() const = 0;
     };
 
     //*-- ConstASCIISequence (internal)
@@ -455,6 +475,10 @@ private:
         SuperString trimLeft() const /*override*/;
 
         SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
 
         friend class CopyASCIISequence;
     };
@@ -500,6 +524,10 @@ private:
         SuperString trimLeft() const /*override*/;
 
         SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
     };
 
     //*--ConstUTF8Sequence (internal)
@@ -543,6 +571,10 @@ private:
 
         SuperString trimRight() const /*override*/;
 
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited:SuperString:: Size freeingCost() const;
+
         friend class CopyUTF8Sequence;
     };
 
@@ -552,6 +584,7 @@ private:
         char *_chars;
         SuperString::Size _length;
         SuperString::Bool _lengthComputed;
+        SuperString::Size _memLength;
 
     public:
         //*- Constructors
@@ -588,6 +621,10 @@ private:
         SuperString trimLeft() const /*override*/;
 
         SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
     };
 
     static Result<SuperString::Pair<Size, Size>, SuperString::Error>
@@ -643,6 +680,12 @@ private:
         SuperString trimLeft() const /*override*/;
 
         SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
+
+        SuperString::Size reconstructionCost() const /*override*/;
     };
 
     //*-- ConcatenationSequence (internal)
@@ -692,6 +735,12 @@ private:
         SuperString trimLeft() const /*override*/;
 
         SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
+
+        SuperString::Size reconstructionCost() const /*override*/;
     };
 
     //*-- MultipleSequence (internal)
@@ -741,6 +790,12 @@ private:
         SuperString trimLeft() const /*override*/;
 
         SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
+
+        SuperString::Size reconstructionCost() const /*override*/;
     };
 
     inline static SuperString::Bool isWhiteSpace(int codeUnit);
@@ -904,6 +959,27 @@ void SuperString::SingleLinkedList<E>::push(E value) {
     } else {
         this->_tail->_next = node;
         this->_tail = node;
+    }
+}
+
+template<class E>
+void SuperString::SingleLinkedList<E>::remove(E value) {
+    Node<E> *node = this->_head;
+    while(node->_next != NULL) {
+        if(node->_next->_data == value) {
+            Node<E> *tmp = node->_next;
+            node->_next = node->_next->_next;
+            delete tmp;
+            continue;
+        }
+        node = node->_next;
+    }
+    if(this->_head != NULL) {
+        if(this->_head->_data == value) {
+            Node<E> *tmp = this->_head;
+            this->_head = this->_head->_next;
+            delete tmp;
+        }
     }
 }
 
