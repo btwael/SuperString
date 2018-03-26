@@ -243,13 +243,26 @@ public:
      */
     static SuperString Const(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
-    static SuperString Const(SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
+    // TODO: comment
+    static SuperString
+    Const(const SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
+
+    // TODO: comment
+    static SuperString Copy(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
+
+    // TODO: comment
+    static SuperString
+    Copy(const SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
 private:
     // forward declaration
     class StringSequence;
 
     class ReferenceStringSequence;
+
+    class CopyASCIISequence;
+
+    class CopyUTF8Sequence;
 
     //*-- SuperString
     StringSequence *_sequence;
@@ -442,6 +455,51 @@ private:
         SuperString trimLeft() const /*override*/;
 
         SuperString trimRight() const /*override*/;
+
+        friend class CopyASCIISequence;
+    };
+
+    //*-- CopyASCIISequence (internal)
+    class CopyASCIISequence: public StringSequence {
+    private:
+        char *_chars;
+        SuperString::Size _length;
+
+    public:
+        //*- Constructors
+
+        CopyASCIISequence(const char *chars);
+
+        CopyASCIISequence(const SuperString::ConstASCIISequence *sequence);
+
+        //*- Destructor
+
+        ~CopyASCIISequence();
+
+        //*- Getters
+
+        // inherited: SuperString::Bool isEmpty() const;
+
+        // inherited: SuperString::Bool isNotEmpty() const;
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        void print(std::ostream &stream) const /*override*/;
+
+        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
     };
 
     //*--ConstUTF8Sequence (internal)
@@ -485,9 +543,55 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-    private:
-        Result<SuperString::Pair<Size, Size>, SuperString::Error> _offsetOfRange(Size startIndex, Size endIndex) const;
+        friend class CopyUTF8Sequence;
     };
+
+    //*-- CopyUTF8Sequence (internal)
+    class CopyUTF8Sequence: public StringSequence {
+    private:
+        char *_chars;
+        SuperString::Size _length;
+        SuperString::Bool _lengthComputed;
+
+    public:
+        //*- Constructors
+
+        CopyUTF8Sequence(const char *chars);
+
+        CopyUTF8Sequence(const SuperString::ConstUTF8Sequence *sequence);
+
+        //*- Destructor
+
+        ~CopyUTF8Sequence();
+
+        //*- Getters
+
+        // inherited: SuperString::Bool isEmpty() const;
+
+        // inherited: SuperString::Bool isNotEmpty() const;
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        void print(std::ostream &stream) const /*override*/;
+
+        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
+    };
+
+    static Result<SuperString::Pair<Size, Size>, SuperString::Error>
+    _UTF8_offsetOfRange(const char *chars, Size startIndex, Size endIndex);
 
     // TODO: ConstUTF16Sequence
 

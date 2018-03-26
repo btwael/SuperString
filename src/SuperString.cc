@@ -141,8 +141,25 @@ SuperString SuperString::Const(const char *chars, SuperString::Encoding encoding
     return SuperString(sequence);
 }
 
-SuperString SuperString::Const(SuperString::Byte *bytes, SuperString::Encoding encoding) {
+SuperString SuperString::Const(const SuperString::Byte *bytes, SuperString::Encoding encoding) {
     return SuperString::Const((char *) bytes, encoding);
+}
+
+SuperString SuperString::Copy(const char *chars, Encoding encoding) {
+    StringSequence *sequence = NULL;
+    switch(encoding) {
+        case Encoding::ASCII:
+            sequence = new SuperString::CopyASCIISequence(chars);
+            break;
+        case Encoding::UTF8:
+            sequence = new SuperString::CopyUTF8Sequence(chars);
+            break;
+    }
+    return SuperString(sequence);
+}
+
+SuperString SuperString::Copy(const SuperString::Byte *bytes, Encoding encoding) {
+    return SuperString::Copy((char *) bytes, encoding);
 }
 
 //*-- SuperString::StringSequence (abstract|internal)
@@ -259,6 +276,96 @@ SuperString SuperString::ConstASCIISequence::trimRight() const {
     return this->substring(0, endIndex).ok(); // TODO:
 }
 
+//*-- SuperString::CopyASCIISequence (internal)
+SuperString::CopyASCIISequence::CopyASCIISequence(const char *chars) {
+    const char *pointer = chars;
+    while(*pointer != '\0') {
+        pointer++;
+    }
+    this->_length = pointer - chars;
+    this->_chars = new char[this->_length + 1];
+    for(Size i = 0; i <= this->_length; i++) {
+        *(this->_chars + i) = *(chars + i);
+    }
+}
+
+SuperString::CopyASCIISequence::CopyASCIISequence(const SuperString::ConstASCIISequence *sequence) {
+    this->_length = sequence->length();
+    this->_chars = new char[this->_length + 1];
+    for(Size i = 0; i <= this->_length; i++) {
+        *(this->_chars + i) = *(sequence->_chars + i);
+    }
+}
+
+SuperString::CopyASCIISequence::~CopyASCIISequence() {
+    delete this->_chars;
+}
+
+SuperString::Size SuperString::CopyASCIISequence::length() const {
+    return this->_length;
+}
+
+SuperString::Result<int, SuperString::Error> SuperString::CopyASCIISequence::codeUnitAt(
+        SuperString::Size index) const {
+    if(index < this->length()) {
+        return Result<int, SuperString::Error>(*(this->_chars + index));
+    }
+    return Result<int, SuperString::Error>(Error::RangeError);
+}
+
+SuperString::Result<SuperString, SuperString::Error>
+SuperString::CopyASCIISequence::substring(SuperString::Size startIndex,
+                                          SuperString::Size endIndex) const {
+    if(this->length() < startIndex || this->length() < endIndex) {
+        return Result<SuperString, Error>(Error::RangeError);
+    }
+    SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+    void *ptr = ((void *) ((unsigned long) &this->_referencers));
+    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
+    return Result<SuperString, Error>(SuperString(sequence));
+}
+
+void SuperString::CopyASCIISequence::print(std::ostream &stream) const {
+    stream << this->_chars;
+}
+
+void SuperString::CopyASCIISequence::print(std::ostream &stream, SuperString::Size startIndex,
+                                           SuperString::Size endIndex) const {
+    stream.write(this->_chars + startIndex, endIndex - startIndex);
+}
+
+SuperString SuperString::CopyASCIISequence::trim() const {
+    Size startIndex = 0;
+    Size endIndex = this->length();
+    char c = *(this->_chars + startIndex);
+    while(c != '\0' && SuperString::isWhiteSpace(c)) {
+        c = *(this->_chars + (++startIndex));
+    }
+    c = *(this->_chars + (endIndex - 1));
+    while(endIndex > 0 && SuperString::isWhiteSpace(c)) {
+        c = *(this->_chars + (--endIndex - 1));
+    }
+    return this->substring(startIndex, endIndex).ok(); // TODO:
+}
+
+SuperString SuperString::CopyASCIISequence::trimLeft() const {
+    Size startIndex = 0;
+    char c = *(this->_chars + startIndex);
+    while(c != '\0' && SuperString::isWhiteSpace(c)) {
+        c = *(this->_chars + ++startIndex);
+    }
+    return this->substring(startIndex, this->length()).ok(); // TODO:
+}
+
+SuperString SuperString::CopyASCIISequence::trimRight() const {
+    Size endIndex = this->length();
+    char c = *(this->_chars + (endIndex - 1));
+    while(endIndex > 0 && SuperString::isWhiteSpace(c)) {
+        c = *(this->_chars + (--endIndex - 1));
+    }
+    return this->substring(0, endIndex).ok(); // TODO:
+}
+
 //*-- SuperString::ConstUTF8Sequence (internal)
 SuperString::ConstUTF8Sequence::ConstUTF8Sequence(const char *chars)
         : _chars(chars),
@@ -346,7 +453,7 @@ void SuperString::ConstUTF8Sequence::print(std::ostream &stream) const {
 
 void SuperString::ConstUTF8Sequence::print(std::ostream &stream, SuperString::Size startIndex,
                                            SuperString::Size endIndex) const {
-    Result<Pair<Size, Size>, Error> result = this->_offsetOfRange(startIndex, endIndex);
+    Result<Pair<Size, Size>, Error> result = SuperString::_UTF8_offsetOfRange(this->_chars, startIndex, endIndex);
     if(result.isOk()) {
         stream.write(this->_chars + result.ok().first(), result.ok().second() - result.ok().first());
     }
@@ -387,23 +494,171 @@ SuperString SuperString::ConstUTF8Sequence::trimRight() const {
     return this->substring(0, endIndex).ok(); // TODO:
 }
 
+//*-- SuperString::CopyUTF8Sequence (internal)
+SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const char *chars)
+        : _lengthComputed(FALSE) {
+    Size memLength;
+    const char *pointer = chars;
+    while(*pointer != '\0') {
+        pointer++;
+    }
+    memLength = pointer - chars + 1;
+    this->_chars = new char[memLength];
+    for(Size i = 0; i < memLength; i++) {
+        *(this->_chars + i) = *(chars + i);
+    }
+}
+
+SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const SuperString::ConstUTF8Sequence *sequence)
+        : _lengthComputed(FALSE) {
+    Size memLength;
+    const char *pointer = sequence->_chars;
+    while(*pointer != '\0') {
+        pointer++;
+    }
+    memLength = pointer - sequence->_chars + 1;
+    this->_chars = new char[memLength];
+    for(Size i = 0; i < memLength; i++) {
+        *(this->_chars + i) = *(sequence->_chars + i);
+    }
+}
+
+SuperString::CopyUTF8Sequence::~CopyUTF8Sequence() {
+    delete this->_chars;
+}
+
+SuperString::Size SuperString::CopyUTF8Sequence::length() const {
+    if(this->_lengthComputed == SuperString::FALSE) {
+        Size length = 0;
+        const unsigned char *pointer = (unsigned char *) this->_chars;
+        while(*pointer != '\0') {
+            if((*pointer & 0xf8) == 0xf0) { pointer += 4; }
+            else if((*pointer & 0xf0) == 0xe0) { pointer += 3; }
+            else if((*pointer & 0xe0) == 0xc0) { pointer += 2; }
+            else if((*pointer & 0x80) == 0x00) { pointer++; }
+            else return 0;
+            length++;
+        }
+        // I need to keep this method const
+        void *ptr = ((void *) ((unsigned long) &this->_lengthComputed));
+        *((Bool *) ptr) = SuperString::TRUE;
+        ptr = ((void *) ((unsigned long) &this->_length));
+        *((Size *) ptr) = length;
+    }
+    return this->_length;
+}
+
+SuperString::Result<int, SuperString::Error> SuperString::CopyUTF8Sequence::codeUnitAt(SuperString::Size index) const {
+    if(index < this->length()) {
+        Size i = 0;
+        const unsigned char *pointer = (unsigned char *) this->_chars;
+        while(*pointer != '\0') {
+            int codeUnit = 0;
+            int remainingBytes = 0;
+            if((*pointer & 0xf8) == 0xf0) {
+                codeUnit = *pointer & 0x07;
+                remainingBytes = 3;
+            } else if((*pointer & 0xf0) == 0xe0) {
+                codeUnit = *pointer & 0x0f;
+                remainingBytes = 2;
+            } else if((*pointer & 0xe0) == 0xc0) {
+                codeUnit = *pointer & 0x1f;
+                remainingBytes = 1;
+            } else if((*pointer & 0x80) == 0x00) {
+                codeUnit = *pointer;
+            } else {
+                return Result<int, SuperString::Error>(Error::InvalidByteSequence);
+            }
+            while(remainingBytes-- > 0) {
+                pointer++;
+                //remainingBytes--;
+                codeUnit = codeUnit << 6 | (*pointer & 0x3f);
+            }
+            if(i == index) {
+                return Result<int, SuperString::Error>(codeUnit);
+            }
+            pointer++;
+            i++;
+        }
+    }
+    return Result<int, SuperString::Error>(Error::RangeError);
+}
+
+SuperString::Result<SuperString, SuperString::Error>
+SuperString::CopyUTF8Sequence::substring(SuperString::Size startIndex, SuperString::Size endIndex) const {
+    if(this->length() < startIndex || this->length() < endIndex) {
+        return Result<SuperString, Error>(Error::RangeError);
+    }
+    SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+    void *ptr = ((void *) ((unsigned long) &this->_referencers));
+    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
+    return Result<SuperString, Error>(SuperString(sequence));
+}
+
+void SuperString::CopyUTF8Sequence::print(std::ostream &stream) const {
+    stream << this->_chars;
+}
+
+void SuperString::CopyUTF8Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+                                          SuperString::Size endIndex) const {
+    Result<Pair<Size, Size>, Error> result = SuperString::_UTF8_offsetOfRange(this->_chars, startIndex, endIndex);
+    if(result.isOk()) {
+        stream.write(this->_chars + result.ok().first(), result.ok().second() - result.ok().first());
+    }
+}
+
+SuperString SuperString::CopyUTF8Sequence::trim() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(startIndex, endIndex).ok(); // TODO:
+}
+
+SuperString SuperString::CopyUTF8Sequence::trimLeft() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    return this->substring(startIndex, this->length()).ok(); // TODO:
+}
+
+SuperString SuperString::CopyUTF8Sequence::trimRight() const {
+    // TODO: General code, specify
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(0, endIndex).ok(); // TODO:
+}
+
+// SuperString::_UTF8_offsetOfRange
 SuperString::Result<SuperString::Pair<SuperString::Size, SuperString::Size>, SuperString::Error>
-SuperString::ConstUTF8Sequence::_offsetOfRange(
-        Size startIndex, Size endIndex) const {
+SuperString::_UTF8_offsetOfRange(const char *chars, Size startIndex, Size endIndex) {
     Size i = 0;
     Size startOffset, endOffset;
     Bool first = FALSE, second = FALSE;
-    const unsigned char *pointer = (unsigned char *) this->_chars;
+    const unsigned char *pointer = (unsigned char *) chars;
     while(*pointer != '\0') {
         if(!first) {
             if(i == startIndex) {
                 first = TRUE;
-                startOffset = ((Size) pointer) - ((Size) this->_chars);
+                startOffset = ((Size) pointer) - ((Size) chars);
             }
         } else {
             if(i == endIndex) {
                 second = TRUE;
-                endOffset = ((Size) pointer) - ((Size) this->_chars);
+                endOffset = ((Size) pointer) - ((Size) chars);
                 break;
             }
         }
@@ -417,7 +672,7 @@ SuperString::ConstUTF8Sequence::_offsetOfRange(
     if(!second) {
         if(i == endIndex) {
             second = TRUE;
-            endOffset = ((Size) pointer) - ((Size) this->_chars);
+            endOffset = ((Size) pointer) - ((Size) chars);
         }
     }
     if(first && second) {
