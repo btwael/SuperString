@@ -213,6 +213,11 @@ public:
      */
     SuperString trimRight() const;
 
+    // TODO: delete this two methods
+    SuperString::Size keepingCost() const;
+
+    SuperString::Size freeingCost() const;
+
     //*- Operators
 
     /**
@@ -290,6 +295,10 @@ private:
 
         ~SingleLinkedList();
 
+        //*- Getters
+
+        SuperString::Size length() const;
+
         //*- Methods
 
         void push(E value);
@@ -315,6 +324,10 @@ private:
         SingleLinkedList<ReferenceStringSequence *> _referencers;
 
     public:
+        // Constructors
+
+        StringSequence();
+
         //*- Destructor
 
         /**
@@ -686,6 +699,8 @@ private:
         // inherited: SuperString::Size freeingCost() const;
 
         SuperString::Size reconstructionCost() const /*override*/;
+
+        friend class StringSequence;
     };
 
     //*-- ConcatenationSequence (internal)
@@ -944,10 +959,21 @@ SuperString::SingleLinkedList<E>::~SingleLinkedList() {
     while(node != NULL) {
         Node<E> *tmp = node;
         node = node->_next;
-        delete node;
+        delete tmp;
     }
     this->_head = NULL;
     this->_tail = NULL;
+}
+
+template<class E>
+SuperString::Size SuperString::SingleLinkedList<E>::length() const {
+    Size length = 0;
+    Node<E> *node = this->_head;
+    while(node != NULL) {
+        length++;
+        node = node->_next;
+    }
+    return length;
 }
 
 template<class E>
@@ -964,22 +990,25 @@ void SuperString::SingleLinkedList<E>::push(E value) {
 
 template<class E>
 void SuperString::SingleLinkedList<E>::remove(E value) {
+    Node<E> *prev = NULL;
     Node<E> *node = this->_head;
-    while(node->_next != NULL) {
-        if(node->_next->_data == value) {
-            Node<E> *tmp = node->_next;
-            node->_next = node->_next->_next;
-            delete tmp;
-            continue;
+    while(node != NULL) {
+        if(node->_data == value) {
+            break;
         }
+        prev = node;
         node = node->_next;
     }
-    if(this->_head != NULL) {
-        if(this->_head->_data == value) {
-            Node<E> *tmp = this->_head;
-            this->_head = this->_head->_next;
-            delete tmp;
+    if(node != NULL) {
+        if(prev == NULL) {
+            this->_head = node->_next;
+        } else {
+            prev->_next = node->_next;
         }
+        if(node->_next == NULL) {
+            this->_tail = prev;
+        }
+        delete node;
     }
 }
 
@@ -987,7 +1016,8 @@ void SuperString::SingleLinkedList<E>::remove(E value) {
 template<class E>
 template<class Ei>
 SuperString::SingleLinkedList<E>::Node<Ei>::Node(E data)
-        : _data(data) {
+        : _data(data),
+          _next(NULL) {
     // nothing go here
 }
 

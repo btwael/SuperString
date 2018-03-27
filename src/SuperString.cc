@@ -25,7 +25,7 @@ SuperString::SuperString(SuperString::StringSequence *sequence)
 }
 
 SuperString::~SuperString() {
-    if(this->_sequence->refRelease() == 0) {
+    if(this->_sequence != NULL && this->_sequence->refRelease() == 0) {
         delete this->_sequence;
     }
 }
@@ -104,6 +104,15 @@ SuperString SuperString::trimRight() const {
     return *this;
 }
 
+// TODO: delete this two methods
+SuperString::Size SuperString::freeingCost() const {
+    return this->_sequence->freeingCost();
+}
+
+SuperString::Size SuperString::keepingCost() const {
+    return this->_sequence->keepingCost();
+}
+
 SuperString SuperString::operator+(const SuperString &other) const {
     ConcatenationSequence *sequence = new ConcatenationSequence(this->_sequence, other._sequence);
     return SuperString(sequence);
@@ -164,6 +173,11 @@ SuperString SuperString::Copy(const SuperString::Byte *bytes, Encoding encoding)
 }
 
 //*-- SuperString::StringSequence (abstract|internal)
+SuperString::StringSequence::StringSequence()
+        : _refCount(0) {
+    // nothing go here
+}
+
 SuperString::StringSequence::~StringSequence() {
     // nothing go here
 }
@@ -181,7 +195,10 @@ void SuperString::StringSequence::refAdd() {
 }
 
 SuperString::Size SuperString::StringSequence::refRelease() {
-    return this->_refCount--;
+    if(this->_refCount == 0) {
+        return 0;
+    }
+    return --this->_refCount;
 }
 
 void SuperString::StringSequence::addReferencer(SuperString::ReferenceStringSequence *sequence) const {
@@ -251,8 +268,6 @@ SuperString::ConstASCIISequence::substring(SuperString::Size startIndex,
         return Result<SuperString, Error>(Error::RangeError);
     }
     SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
-    void *ptr = ((void *) ((unsigned long) &this->_referencers));
-    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
@@ -345,8 +360,6 @@ SuperString::CopyASCIISequence::substring(SuperString::Size startIndex,
         return Result<SuperString, Error>(Error::RangeError);
     }
     SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
-    void *ptr = ((void *) ((unsigned long) &this->_referencers));
-    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
@@ -475,8 +488,6 @@ SuperString::ConstUTF8Sequence::substring(SuperString::Size startIndex,
         return Result<SuperString, Error>(Error::RangeError);
     }
     SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
-    void *ptr = ((void *) ((unsigned long) &this->_referencers));
-    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
@@ -627,8 +638,6 @@ SuperString::CopyUTF8Sequence::substring(SuperString::Size startIndex, SuperStri
         return Result<SuperString, Error>(Error::RangeError);
     }
     SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
-    void *ptr = ((void *) ((unsigned long) &this->_referencers));
-    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
@@ -730,16 +739,12 @@ SuperString::SubstringSequence::SubstringSequence(const StringSequence *sequence
     this->_container._substring._sequence = sequence;
     this->_container._substring._startIndex = startIndex;
     this->_container._substring._endIndex = endIndex;
-    //void *ptr = ((void *) ((unsigned long) this->_container._substring._sequence));
-    //((StringSequence *) ptr)->refAdd();
+    this->_container._substring._sequence->addReferencer(this);
 }
 
 SuperString::SubstringSequence::~SubstringSequence() {
     if(this->_kind == Kind::SUBSTRING) {
-        //void *ptr = ((void *) ((unsigned long) this->_container._substring._sequence));
-        //if(((StringSequence *) ptr)->refRelease() == 0) {
-        //    delete ((StringSequence *) ptr);
-        //}
+        this->_container._substring._sequence->removeReferencer(this);
     }
 }
 
@@ -848,22 +853,14 @@ SuperString::ConcatenationSequence::ConcatenationSequence(const StringSequence *
     this->_kind = Kind::CONCATENATION;
     this->_container._concatenation._left = leftSequence;
     this->_container._concatenation._right = rightSequence;
-    //void *ptr = ((void *) ((unsigned long) this->_container._concatenation._left));
-    //((StringSequence *) ptr)->refAdd();
-    //ptr = ((void *) ((unsigned long) this->_container._concatenation._right));
-    //((StringSequence *) ptr)->refAdd();
+    this->_container._concatenation._left->addReferencer(this);
+    this->_container._concatenation._right->addReferencer(this);
 }
 
 SuperString::ConcatenationSequence::~ConcatenationSequence() {
     if(this->_kind == Kind::CONCATENATION) {
-        //void *ptr = ((void *) ((unsigned long) this->_container._concatenation._left));
-        //if(((StringSequence *) ptr)->refRelease() == 0) {
-        //    delete ((StringSequence *) ptr);
-        //}
-        //ptr = ((void *) ((unsigned long) this->_container._concatenation._right));
-        //if(((StringSequence *) ptr)->refRelease() == 0) {
-        //    delete ((StringSequence *) ptr);
-        //}
+        this->_container._concatenation._left->removeReferencer(this);
+        this->_container._concatenation._right->removeReferencer(this);
     }
 }
 
@@ -899,8 +896,6 @@ SuperString::ConcatenationSequence::substring(SuperString::Size startIndex,
         return Result<SuperString, Error>(Error::RangeError);
     }
     SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
-    void *ptr = ((void *) ((unsigned long) &this->_referencers));
-    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
@@ -993,16 +988,12 @@ SuperString::MultipleSequence::MultipleSequence(const StringSequence *sequence, 
     this->_kind = Kind::MULTIPLE;
     this->_container._multiple._time = time;
     this->_container._multiple._sequence = sequence;
-    void *ptr = ((void *) ((unsigned long) this->_container._multiple._sequence));
-    ((StringSequence *) ptr)->refAdd();
+    this->_container._multiple._sequence->addReferencer(this);
 }
 
 SuperString::MultipleSequence::~MultipleSequence() {
     if(this->_kind == Kind::MULTIPLE) {
-        void *ptr = ((void *) ((unsigned long) this->_container._multiple._sequence));
-        if(((StringSequence *) ptr)->refRelease() == 0) {
-            delete ((StringSequence *) ptr);
-        }
+        this->_container._multiple._sequence->removeReferencer(this);
     }
 }
 
@@ -1035,8 +1026,6 @@ SuperString::MultipleSequence::substring(SuperString::Size startIndex,
         return Result<SuperString, Error>(Error::RangeError);
     }
     SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
-    void *ptr = ((void *) ((unsigned long) &this->_referencers));
-    ((SingleLinkedList<ReferenceStringSequence *> *) ptr)->push(sequence);
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
