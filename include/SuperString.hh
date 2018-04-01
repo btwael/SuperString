@@ -270,6 +270,8 @@ private:
 
     class CopyUTF8Sequence;
 
+    class CopyUTF16Sequence;
+
     //*-- SuperString
     StringSequence *_sequence;
 
@@ -691,6 +693,55 @@ private:
         SuperString::Size keepingCost() const /*override*/;
 
         // inherited:SuperString:: Size freeingCost() const;
+
+        friend class CopyUTF16Sequence;
+    };
+
+    //*-- CopyUTF16Sequence (internal)
+    class CopyUTF16Sequence: public StringSequence {
+    private:
+        Byte *_chars;
+        SuperString::Size _length;
+
+    public:
+        //*- Constructors
+
+        CopyUTF16Sequence(const SuperString::Byte *chars);
+
+        CopyUTF16Sequence(const SuperString::ConstUTF16Sequence *sequence);
+
+        //*- Destructor
+
+        ~CopyUTF16Sequence();
+
+        //*- Getters
+
+        // inherited: SuperString::Bool isEmpty() const;
+
+        // inherited: SuperString::Bool isNotEmpty() const;
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        void print(std::ostream &stream) const /*override*/;
+
+        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
     };
 
     //*-- SubstringSequence (internal)

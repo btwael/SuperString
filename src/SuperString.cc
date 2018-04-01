@@ -4,7 +4,6 @@
 
 // std
 #include <iostream> // The only thing we need, and just for printing
-#include <SuperString.hh>
 
 /*-- definitions --*/
 
@@ -168,7 +167,7 @@ SuperString SuperString::Copy(const char *chars, Encoding encoding) {
             sequence = new SuperString::CopyUTF8Sequence(chars);
             break;
         case Encoding::UTF16:
-            // TODO
+            sequence = new SuperString::CopyUTF16Sequence((Byte *) chars);
             break;
     }
     return SuperString(sequence);
@@ -879,6 +878,154 @@ SuperString SuperString::ConstUTF16Sequence::trimRight() const {
 
 SuperString::Size SuperString::ConstUTF16Sequence::keepingCost() const {
     return sizeof(ConstUTF16Sequence);
+}
+
+//*-- SuperString::CopyUTF16Sequence (internal)
+SuperString::CopyUTF16Sequence::CopyUTF16Sequence(const SuperString::Byte *chars) {
+    Size memLength;
+    const Byte *pointer = chars;
+    while(*pointer != 0x00 || *(pointer + 1) != 0x00) {
+        pointer += 2;
+    }
+    memLength = pointer - chars + 2;
+    this->_length = (pointer - chars) / 2;
+    this->_chars = new Byte[memLength];
+    for(Size i = 0; i < memLength; i++) {
+        *(this->_chars + i) = *(chars + i);
+    }
+}
+
+SuperString::CopyUTF16Sequence::CopyUTF16Sequence(const SuperString::ConstUTF16Sequence *sequence) {
+    Size memLength;
+    const Byte *pointer = sequence->_chars;
+    while(*pointer != 0x00 || *(pointer + 1) != 0x00) {
+        pointer++;
+    }
+    memLength = pointer - sequence->_chars + 2;
+    this->_length = (pointer - sequence->_chars) / 2;
+    this->_chars = new Byte[memLength];
+    for(Size i = 0; i < memLength; i++) {
+        *(this->_chars + i) = *(sequence->_chars + i);
+    }
+}
+
+SuperString::CopyUTF16Sequence::~CopyUTF16Sequence() {
+    delete this->_chars;
+}
+
+SuperString::Size SuperString::CopyUTF16Sequence::length() const {
+    return this->_length;
+}
+
+SuperString::Result<int, SuperString::Error> SuperString::CopyUTF16Sequence::codeUnitAt(SuperString::Size index) const {
+    if(index < this->length()) {
+        return Result<int, SuperString::Error>((*(this->_chars + index * 2) << 8) | *(this->_chars + index * 2 + 1));
+    }
+    return Result<int, SuperString::Error>(Error::RangeError);
+}
+
+SuperString::Result<SuperString, SuperString::Error>
+SuperString::CopyUTF16Sequence::substring(SuperString::Size startIndex, SuperString::Size endIndex) const {
+    if(this->length() < startIndex || this->length() < endIndex) {
+        return Result<SuperString, Error>(Error::RangeError);
+    }
+    SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+    return Result<SuperString, Error>(SuperString(sequence));
+}
+
+void SuperString::CopyUTF16Sequence::print(std::ostream &stream) const {
+    this->print(stream, 0, this->length());
+}
+
+void SuperString::CopyUTF16Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+                                          SuperString::Size endIndex) const {
+    for(Size i = startIndex, length = this->length(); i < length && i < endIndex; i++) {
+        int c = this->codeUnitAt(i).ok();
+        char numBytes = 0;
+        Byte byte1, byte2, byte3, byte4;
+        if(c < 0x0080) {
+            byte1 = (Byte) c;
+            numBytes = 1;
+        } else if(c < 0x0800) {
+            byte1 = (Byte) ((c >> 6) + (((Byte) 0b110) << 5));
+            byte2 = (Byte) ((((Byte) 0x2) << 6) + (c & 0b00000111111));
+            numBytes = 2;
+        } else if(c < 0x10000) {
+            byte1 = (Byte) ((c >> 12) + (((Byte) 0b1110) << 4));
+            byte2 = (Byte) ((((Byte) 0x2) << 6) + (c >> 6 & 0b0000111111));
+            byte3 = (Byte) ((((Byte) 0x2) << 6) + (c & 0b0000000000111111));
+            numBytes = 3;
+        } else if(c < 0x200000) {
+            byte1 = (Byte) ((c >> 18) + (((Byte) 0b11110) << 3));
+            byte2 = (Byte) ((((Byte) 0x2) << 6) + (c >> 12 & 0b000111111));
+            byte3 = (Byte) ((((Byte) 0x2) << 6) + (c >> 6 & 0b000000000111111));
+            byte4 = (Byte) ((((Byte) 0x2) << 6) + (c & 0b00000000000000111111));
+            numBytes = 4;
+        }
+        char *printable = new char[numBytes];
+        Size j = 0;
+        while(j < numBytes) {
+            switch(j) {
+                case 0:
+                    printable[j] = byte1;
+                    break;
+                case 1:
+                    printable[j] = byte2;
+                    break;
+                case 2:
+                    printable[j] = byte3;
+                    break;
+                case 3:
+                    printable[j] = byte4;
+                    break;
+                default:
+                    ;
+            }
+            j++;
+        }
+        stream.write(printable, numBytes);
+        delete[] printable;
+    }
+}
+
+SuperString SuperString::CopyUTF16Sequence::trim() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(startIndex, endIndex).ok(); // TODO:
+}
+
+SuperString SuperString::CopyUTF16Sequence::trimLeft() const {
+    // TODO: General code, specify
+    Size startIndex = 0;
+    Result<int, Error> result = this->codeUnitAt(startIndex);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(++startIndex);
+    }
+    return this->substring(startIndex, this->length()).ok(); // TODO:
+}
+
+SuperString SuperString::CopyUTF16Sequence::trimRight() const {
+    // TODO: General code, specify
+    Size endIndex = this->length();
+    Result<int, Error> result = this->codeUnitAt(endIndex - 1);
+    while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
+        result = this->codeUnitAt(--endIndex - 1);
+    }
+    return this->substring(0, endIndex).ok(); // TODO:
+}
+
+SuperString::Size SuperString::CopyUTF16Sequence::keepingCost() const {
+    Size cost = sizeof(CopyUTF8Sequence) + this->length() * 2 + 2;
+    return cost;
 }
 
 //*-- SuperString::SubstringSequence (internal)
