@@ -25,7 +25,8 @@ public:
      */
     enum class Encoding {
         ASCII,
-        UTF8
+        UTF8,
+        UTF16 // this is UTF8BE TODO: support 4 bytes utf8, improve LE&BE version
     };
 
     //*-- Error
@@ -446,6 +447,9 @@ private:
 
         // TODO: comment
         virtual SuperString::Size reconstructionCost() const = 0;
+
+        // TODO: comment
+        virtual void reconstruct(const StringSequence *sequence) const = 0;
     };
 
     //*-- ConstASCIISequence (internal)
@@ -643,7 +647,51 @@ private:
     static Result<SuperString::Pair<Size, Size>, SuperString::Error>
     _UTF8_offsetOfRange(const char *chars, Size startIndex, Size endIndex);
 
-    // TODO: ConstUTF16Sequence
+    //*-- ConstUTF16Sequence (internal)
+    class ConstUTF16Sequence: public StringSequence {
+    private:
+        const Byte *_chars;
+        SuperString::Size _length;
+        SuperString::Bool _lengthComputed;
+
+    public:
+        //*- Constructors
+
+        ConstUTF16Sequence(const SuperString::Byte *chars);
+
+        //*- Destructor
+
+        ~ConstUTF16Sequence();
+
+        //*- Getters
+
+        // inherited: SuperString::Bool isEmpty() const;
+
+        // inherited: SuperString::Bool isNotEmpty() const;
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        void print(std::ostream &stream) const /*override*/;
+
+        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited:SuperString:: Size freeingCost() const;
+    };
 
     //*-- SubstringSequence (internal)
     class SubstringSequence: public ReferenceStringSequence {
@@ -660,7 +708,8 @@ private:
                 Size _endIndex;
             } _substring;
             struct {
-
+                char *_chars;
+                Size _length;
             } _contented;
         } _container;
 
@@ -699,6 +748,8 @@ private:
         // inherited: SuperString::Size freeingCost() const;
 
         SuperString::Size reconstructionCost() const /*override*/;
+
+        void reconstruct(const StringSequence *sequence) const /*override*/;
 
         friend class StringSequence;
     };
@@ -756,6 +807,8 @@ private:
         // inherited: SuperString::Size freeingCost() const;
 
         SuperString::Size reconstructionCost() const /*override*/;
+
+        void reconstruct(const StringSequence *sequence) const /*override*/;
     };
 
     //*-- MultipleSequence (internal)
@@ -811,6 +864,8 @@ private:
         // inherited: SuperString::Size freeingCost() const;
 
         SuperString::Size reconstructionCost() const /*override*/;
+
+        void reconstruct(const StringSequence *sequence) const /*override*/;
     };
 
     inline static SuperString::Bool isWhiteSpace(int codeUnit);
