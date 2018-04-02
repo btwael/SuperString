@@ -26,8 +26,9 @@ public:
     enum class Encoding {
         ASCII,
         UTF8,
-        UTF16BE
+        UTF16BE,
         // TODO: support 4 bytes utf16, improve LE&BE version
+        UTF32
     };
 
     //*-- Error
@@ -257,6 +258,8 @@ public:
     // TODO: comment
     static SuperString Copy(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
+    // TODO: support from int *
+
     // TODO: comment
     static SuperString
     Copy(const SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
@@ -272,6 +275,8 @@ private:
     class CopyUTF8Sequence;
 
     class CopyUTF16BESequence;
+
+    class CopyUTF32Sequence;
 
     //*-- SuperString
     StringSequence *_sequence;
@@ -410,6 +415,7 @@ private:
         // TODO: comment
         void removeReferencer(SuperString::ReferenceStringSequence *sequence) const;
 
+        void reconstructReferencers();
 
         friend class SuperString;
     };
@@ -751,6 +757,103 @@ private:
         // inherited: SuperString::Size freeingCost() const;
     };
 
+    //*-- ConstUTF32Sequence (internal)
+    class ConstUTF32Sequence: public StringSequence {
+    private:
+        const int *_bytes;
+        SuperString::Size _length;
+        SuperString::Bool _lengthComputed;
+
+    public:
+        //*- Constructors
+
+        ConstUTF32Sequence(const SuperString::Byte *bytes);
+
+        //*- Destructor
+
+        ~ConstUTF32Sequence();
+
+        //*- Getters
+
+        // inherited: SuperString::Bool isEmpty() const;
+
+        // inherited: SuperString::Bool isNotEmpty() const;
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
+
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
+
+        friend class CopyUTF32Sequence;
+    };
+
+    //*-- CopyUTF32Sequence (internal)
+    class CopyUTF32Sequence: public StringSequence {
+    private:
+        int *_data;
+        SuperString::Size _length;
+
+    public:
+        //*- Constructors
+
+        CopyUTF32Sequence(const SuperString::Byte *chars);
+
+        CopyUTF32Sequence(const SuperString::ConstUTF32Sequence *sequence);
+
+        //*- Destructor
+
+        ~CopyUTF32Sequence();
+
+        //*- Getters
+
+        // inherited: SuperString::Bool isEmpty() const;
+
+        // inherited: SuperString::Bool isNotEmpty() const;
+
+        SuperString::Size length() const /*override*/;
+
+        //*- Methods
+
+        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+
+        SuperString::Result<SuperString, SuperString::Error>
+        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
+
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+
+        SuperString trim() const /*override*/;
+
+        SuperString trimLeft() const /*override*/;
+
+        SuperString trimRight() const /*override*/;
+
+        SuperString::Size keepingCost() const /*override*/;
+
+        // inherited: SuperString::Size freeingCost() const;
+    };
+
     //*-- SubstringSequence (internal)
     class SubstringSequence: public ReferenceStringSequence {
     private:
@@ -758,17 +861,20 @@ private:
             SUBSTRING,
             CONTENTED
         };
+        struct SubstringMetaInfo {
+            const StringSequence *_sequence;
+            Size _startIndex;
+            Size _endIndex;
+        };
+        struct ReconstructedSubstringMetaInfo {
+            int *_data;
+            Size _length;
+        };
+
         Kind _kind;
         union {
-            struct {
-                const StringSequence *_sequence;
-                Size _startIndex;
-                Size _endIndex;
-            } _substring;
-            struct {
-                int *_chars;
-                Size _length;
-            } _contented;
+            struct SubstringMetaInfo _substring;
+            struct ReconstructedSubstringMetaInfo _contented;
         } _container;
 
     public:
@@ -990,6 +1096,28 @@ private:
                           SuperString::Size endIndex);
 
         // TODO: add customized trims methods
+    };
+
+    class UTF32 {
+    public:
+        static SuperString::Size length(const SuperString::Byte *bytes);
+
+        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        lengthAndMemoryLength(const SuperString::Byte *bytes);
+
+        static int codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
+                          SuperString::Size endIndex);
+
+        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        trim(const SuperString::Byte *bytes, SuperString::Size length);
+
+        static SuperString::Size trimLeft(const SuperString::Byte *bytes);
+
+        static SuperString::Size trimRight(const SuperString::Byte *bytes, SuperString::Size length);
     };
 };
 

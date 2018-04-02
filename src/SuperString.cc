@@ -150,6 +150,9 @@ SuperString SuperString::Const(const char *chars, SuperString::Encoding encoding
         case Encoding::UTF16BE:
             sequence = new SuperString::ConstUTF16BESequence((Byte *) chars);
             break;
+        default:
+            sequence = new SuperString::ConstUTF32Sequence((Byte *) chars);
+            break;
     }
     return SuperString(sequence);
 }
@@ -169,6 +172,9 @@ SuperString SuperString::Copy(const char *chars, Encoding encoding) {
             break;
         case Encoding::UTF16BE:
             sequence = new SuperString::CopyUTF16BESequence((Byte *) chars);
+            break;
+        default:
+            sequence = new SuperString::CopyUTF32Sequence((Byte *) chars);
             break;
     }
     return SuperString(sequence);
@@ -233,6 +239,14 @@ SuperString::Size SuperString::StringSequence::freeingCost() const {
     return cost;
 }
 
+void SuperString::StringSequence::reconstructReferencers() {
+    SingleLinkedList<ReferenceStringSequence *>::Node<ReferenceStringSequence *> *node = this->_referencers._head;
+    while(node != NULL) {
+        node->_data->reconstruct(this);
+        node = node->_next;
+    }
+}
+
 //*-- SuperString::ReferenceStringSequence (abstract|internal)
 SuperString::ReferenceStringSequence::~ReferenceStringSequence() {
     // nothing go here
@@ -246,7 +260,7 @@ SuperString::ConstASCIISequence::ConstASCIISequence(const Byte *bytes)
 }
 
 SuperString::ConstASCIISequence::~ConstASCIISequence() {
-    // nothing go here
+    this->reconstructReferencers();
 }
 
 SuperString::Size SuperString::ConstASCIISequence::length() const /*override*/ {
@@ -279,6 +293,7 @@ SuperString::ConstASCIISequence::substring(SuperString::Size startIndex,
 
 SuperString::Bool SuperString::ConstASCIISequence::print(std::ostream &stream) const {
     SuperString::ASCII::print(stream, this->_bytes);
+    return TRUE;
 }
 
 SuperString::Bool SuperString::ConstASCIISequence::print(std::ostream &stream, SuperString::Size startIndex,
@@ -325,6 +340,7 @@ SuperString::CopyASCIISequence::CopyASCIISequence(const SuperString::ConstASCIIS
 }
 
 SuperString::CopyASCIISequence::~CopyASCIISequence() {
+    this->reconstructReferencers();
     delete this->_data;
 }
 
@@ -394,7 +410,7 @@ SuperString::ConstUTF8Sequence::ConstUTF8Sequence(const Byte *bytes)
 }
 
 SuperString::ConstUTF8Sequence::~ConstUTF8Sequence() {
-    // nothing go here
+    this->reconstructReferencers();
 }
 
 SuperString::Size SuperString::ConstUTF8Sequence::length() const /*override*/ {
@@ -498,12 +514,7 @@ SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const SuperString::ConstUTF8Sequ
 }
 
 SuperString::CopyUTF8Sequence::~CopyUTF8Sequence() {
-    SingleLinkedList<ReferenceStringSequence *>::Node<ReferenceStringSequence *> *node = this->_referencers._head;
-    // TODO:
-    while(node != NULL) {
-        node->_data->reconstruct(this);
-        node = node->_next;
-    }
+    this->reconstructReferencers();
     delete this->_data;
 }
 
@@ -591,7 +602,7 @@ SuperString::ConstUTF16BESequence::ConstUTF16BESequence(const SuperString::Byte 
 }
 
 SuperString::ConstUTF16BESequence::~ConstUTF16BESequence() {
-    // nothing go here
+    this->reconstructReferencers();
 }
 
 SuperString::Size SuperString::ConstUTF16BESequence::length() const /*override*/ {
@@ -628,7 +639,7 @@ SuperString::Bool SuperString::ConstUTF16BESequence::print(std::ostream &stream)
 }
 
 SuperString::Bool SuperString::ConstUTF16BESequence::print(std::ostream &stream, SuperString::Size startIndex,
-                                              SuperString::Size endIndex) const {
+                                                           SuperString::Size endIndex) const {
     Size length = this->length();
     if(length < startIndex || length < endIndex) {
         return FALSE;
@@ -698,6 +709,7 @@ SuperString::CopyUTF16BESequence::CopyUTF16BESequence(const SuperString::ConstUT
 }
 
 SuperString::CopyUTF16BESequence::~CopyUTF16BESequence() {
+    this->reconstructReferencers();
     delete this->_data;
 }
 
@@ -705,7 +717,8 @@ SuperString::Size SuperString::CopyUTF16BESequence::length() const {
     return this->_length;
 }
 
-SuperString::Result<int, SuperString::Error> SuperString::CopyUTF16BESequence::codeUnitAt(SuperString::Size index) const {
+SuperString::Result<int, SuperString::Error>
+SuperString::CopyUTF16BESequence::codeUnitAt(SuperString::Size index) const {
     if(index < this->length()) {
         return SuperString::UTF16BE::codeUnitAt(this->_data, index);
     }
@@ -728,7 +741,7 @@ SuperString::Bool SuperString::CopyUTF16BESequence::print(std::ostream &stream) 
 }
 
 SuperString::Bool SuperString::CopyUTF16BESequence::print(std::ostream &stream, SuperString::Size startIndex,
-                                           SuperString::Size endIndex) const {
+                                                          SuperString::Size endIndex) const {
     Size length = this->length();
     if(length < startIndex || length < endIndex) {
         return FALSE;
@@ -777,6 +790,156 @@ SuperString::Size SuperString::CopyUTF16BESequence::keepingCost() const {
     return cost;
 }
 
+//*-- SuperString::ConstUTF32Sequence (internal)
+SuperString::ConstUTF32Sequence::ConstUTF32Sequence(const SuperString::Byte *bytes)
+        : _bytes(((const int *) bytes)),
+          _lengthComputed(SuperString::FALSE) {
+    // nothing go here
+}
+
+SuperString::ConstUTF32Sequence::~ConstUTF32Sequence() {
+    this->reconstructReferencers();
+}
+
+SuperString::Size SuperString::ConstUTF32Sequence::length() const /*override*/ {
+    if(this->_lengthComputed == SuperString::FALSE) {
+        ConstUTF32Sequence *self = ((ConstUTF32Sequence *) ((Size) this)); // to keep this method `const`
+        self->_lengthComputed = SuperString::TRUE;
+        self->_length = SuperString::UTF32::length(((const Byte *) this->_bytes));
+    }
+    return this->_length;
+}
+
+SuperString::Result<int, SuperString::Error>
+SuperString::ConstUTF32Sequence::codeUnitAt(SuperString::Size index) const {
+    if(index < this->length()) {
+        return Result<int, SuperString::Error>(SuperString::UTF32::codeUnitAt(((const Byte *) this->_bytes), index));
+    }
+    return Result<int, SuperString::Error>(Error::RangeError);
+}
+
+SuperString::Result<SuperString, SuperString::Error>
+SuperString::ConstUTF32Sequence::substring(SuperString::Size startIndex,
+                                           SuperString::Size endIndex) const {
+    // TODO: General code, specify + repeated * times
+    if(this->length() < startIndex || this->length() < endIndex) {
+        return Result<SuperString, Error>(Error::RangeError);
+    }
+    SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+    return Result<SuperString, Error>(SuperString(sequence));
+}
+
+SuperString::Bool SuperString::ConstUTF32Sequence::print(std::ostream &stream) const {
+    SuperString::UTF32::print(stream, ((const Byte *) this->_bytes));
+    return TRUE;
+}
+
+SuperString::Bool SuperString::ConstUTF32Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+                                                         SuperString::Size endIndex) const {
+    if(this->length() < startIndex || this->length() < endIndex) {
+        return FALSE;
+    }
+    SuperString::UTF32::print(stream, ((Byte *) this->_bytes), startIndex, endIndex);
+    return TRUE;
+}
+
+SuperString SuperString::ConstUTF32Sequence::trim() const {
+    Pair<Size, Size> indexes = SuperString::UTF32::trim(((Byte *) this->_bytes), this->_length);
+    return this->substring(indexes.first(), indexes.second()).ok();
+}
+
+SuperString SuperString::ConstUTF32Sequence::trimLeft() const {
+    return this->substring(SuperString::UTF32::trimLeft(((Byte *) this->_bytes)), this->length()).ok();
+}
+
+SuperString SuperString::ConstUTF32Sequence::trimRight() const {
+    return this->substring(0, SuperString::UTF32::trimRight(((Byte *) this->_bytes), this->length())).ok();
+}
+
+SuperString::Size SuperString::ConstUTF32Sequence::keepingCost() const {
+    return sizeof(ConstUTF32Sequence);
+}
+
+//*-- SuperString::CopyUTF32Sequence (internal)
+SuperString::CopyUTF32Sequence::CopyUTF32Sequence(const SuperString::Byte *bytes) {
+    this->_length = SuperString::UTF32::length(bytes);
+    this->_data = new int[this->_length + 1];
+    for(Size i = 0; i <= this->_length; i++) {
+        *(this->_data + i) = *(((const int *) bytes) + i);
+    }
+}
+
+SuperString::CopyUTF32Sequence::CopyUTF32Sequence(const SuperString::ConstUTF32Sequence *sequence) {
+    this->_length = SuperString::UTF32::length(((const Byte *) sequence->_bytes));
+    this->_data = new int[this->_length + 1];
+    for(Size i = 0; i <= this->_length; i++) {
+        *(this->_data + i) = *(sequence->_bytes + i);
+    }
+}
+
+SuperString::CopyUTF32Sequence::~CopyUTF32Sequence() {
+    this->reconstructReferencers();
+    delete this->_data;
+}
+
+SuperString::Size SuperString::CopyUTF32Sequence::length() const {
+    return this->_length;
+}
+
+SuperString::Result<int, SuperString::Error> SuperString::CopyUTF32Sequence::codeUnitAt(
+        SuperString::Size index) const {
+    if(index < this->length()) {
+        return Result<int, SuperString::Error>(SuperString::UTF32::codeUnitAt(((const Byte *) this->_data), index));
+    }
+    return Result<int, SuperString::Error>(Error::RangeError);
+}
+
+SuperString::Result<SuperString, SuperString::Error>
+SuperString::CopyUTF32Sequence::substring(SuperString::Size startIndex,
+                                          SuperString::Size endIndex) const {
+    // TODO: General code, specify + repeated * times
+    if(this->length() < startIndex || this->length() < endIndex) {
+        return Result<SuperString, Error>(Error::RangeError);
+    }
+    SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+    return Result<SuperString, Error>(SuperString(sequence));
+}
+
+SuperString::Bool SuperString::CopyUTF32Sequence::print(std::ostream &stream) const {
+    SuperString::UTF32::print(stream, ((const Byte *) this->_data));
+    return TRUE;
+}
+
+SuperString::Bool SuperString::CopyUTF32Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+                                                        SuperString::Size endIndex) const {
+    if(this->length() < startIndex || this->length() < endIndex) {
+        return FALSE;
+    }
+    SuperString::UTF32::print(stream, ((const Byte *) this->_data), startIndex, endIndex);
+    return TRUE;
+}
+
+SuperString SuperString::CopyUTF32Sequence::trim() const {
+    Pair<Size, Size> indexes = SuperString::UTF32::trim(((const Byte *) this->_data), this->_length);
+    return this->substring(indexes.first(), indexes.second()).ok();
+}
+
+SuperString SuperString::CopyUTF32Sequence::trimLeft() const {
+    return this->substring(SuperString::UTF32::trimLeft(((const Byte *) this->_data)), this->length()).ok();
+}
+
+SuperString SuperString::CopyUTF32Sequence::trimRight() const {
+    return this->substring(0, SuperString::UTF32::trimRight(((const Byte *) this->_data), this->length())).ok();
+}
+
+SuperString::Size SuperString::CopyUTF32Sequence::keepingCost() const {
+    Size cost = sizeof(CopyASCIISequence);
+    if(this->_data != NULL) {
+        cost += this->length() + 1;
+    }
+    return cost;
+}
+
 //*-- SuperString::SubstringSequence (internal)
 SuperString::SubstringSequence::SubstringSequence(const StringSequence *sequence, SuperString::Size startIndex,
                                                   SuperString::Size endIndex) {
@@ -788,32 +951,38 @@ SuperString::SubstringSequence::SubstringSequence(const StringSequence *sequence
 }
 
 SuperString::SubstringSequence::~SubstringSequence() {
-    if(this->_kind == Kind::SUBSTRING) {
-        this->_container._substring._sequence->removeReferencer(this);
-        if(this->_container._substring._sequence->refCount() == 0 && this->freeingCost() < this->keepingCost()) {
-            delete this->_container._substring._sequence;
-        }
+    switch(this->_kind) {
+        case Kind::SUBSTRING:
+            this->_container._substring._sequence->removeReferencer(this);
+            if(this->_container._substring._sequence->refCount() == 0 && this->freeingCost() < this->keepingCost()) {
+                delete this->_container._substring._sequence;
+            }
+            break;
+        case Kind::CONTENTED:
+            delete this->_container._contented._data;
+            break;
     }
-    // TODO:
 }
 
 SuperString::Size SuperString::SubstringSequence::length() const /*override*/ {
-    if(this->_kind == Kind::SUBSTRING) {
-        return this->_container._substring._endIndex - this->_container._substring._startIndex;
+    switch(this->_kind) {
+        case Kind::SUBSTRING:
+            return this->_container._substring._endIndex - this->_container._substring._startIndex;
+        case Kind::CONTENTED:
+            return this->_container._contented._length;
     }
-    // else: this->_kind == Kind::CONTENTED
-    return this->_container._contented._length;
 }
 
 SuperString::Result<int, SuperString::Error> SuperString::SubstringSequence::codeUnitAt(
         SuperString::Size index) const {
-    std::cout << index << " " << this->length() << "\n";
     if(index < this->length()) {
-        if(this->_kind == Kind::SUBSTRING) {
-            return this->_container._substring._sequence->codeUnitAt(this->_container._substring._startIndex + index);
+        switch(this->_kind) {
+            case Kind::SUBSTRING:
+                return this->_container._substring._sequence->codeUnitAt(
+                        this->_container._substring._startIndex + index);
+            case Kind::CONTENTED:
+                return Result<int, SuperString::Error>(*(this->_container._contented._data + index));
         }
-        // else: this->_kind == Kind::CONTENTED
-        return Result<int, SuperString::Error>(*(this->_container._contented._chars + index));
     }
     return Result<int, SuperString::Error>(Error::RangeError);
 }
@@ -837,70 +1006,27 @@ SuperString::SubstringSequence::substring(SuperString::Size startIndex, SuperStr
 }
 
 SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream) const {
-    if(this->_kind == Kind::SUBSTRING) {
-        return this->_container._substring._sequence->print(stream, this->_container._substring._startIndex,
-                                                     this->_container._substring._endIndex);
-    } else {
-        return this->print(stream, 0, this->length());
+    switch(this->_kind) {
+        case Kind::SUBSTRING:
+            return this->_container._substring._sequence->print(stream, this->_container._substring._startIndex,
+                                                                this->_container._substring._endIndex);
+        case Kind::CONTENTED:
+            SuperString::UTF32::print(stream, ((Byte *) this->_container._contented._data));
+            return TRUE;
     }
 }
 
 SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream, SuperString::Size startIndex,
-                                           SuperString::Size endIndex) const {
-    if(this->_kind == Kind::SUBSTRING) {
-        return this->_container._substring._sequence->print(stream, this->_container._substring._startIndex + startIndex,
-                                                     this->_container._substring._startIndex + endIndex);
-    } else {
-        // TODO: General code, specify
-        for(Size i = startIndex, length = this->length(); i < length && i < endIndex; i++) {
-            int c = this->codeUnitAt(i).ok();
-            char numBytes = 0;
-            Byte byte1, byte2, byte3, byte4;
-            if(c < 0x0080) {
-                byte1 = (Byte) c;
-                numBytes = 1;
-            } else if(c < 0x0800) {
-                byte1 = (Byte) ((c >> 6) + (((Byte) 0b110) << 5));
-                byte2 = (Byte) ((((Byte) 0x2) << 6) + (c & 0b00000111111));
-                numBytes = 2;
-            } else if(c < 0x10000) {
-                byte1 = (Byte) ((c >> 12) + (((Byte) 0b1110) << 4));
-                byte2 = (Byte) ((((Byte) 0x2) << 6) + (c >> 6 & 0b0000111111));
-                byte3 = (Byte) ((((Byte) 0x2) << 6) + (c & 0b0000000000111111));
-                numBytes = 3;
-            } else if(c < 0x200000) {
-                byte1 = (Byte) ((c >> 18) + (((Byte) 0b11110) << 3));
-                byte2 = (Byte) ((((Byte) 0x2) << 6) + (c >> 12 & 0b000111111));
-                byte3 = (Byte) ((((Byte) 0x2) << 6) + (c >> 6 & 0b000000000111111));
-                byte4 = (Byte) ((((Byte) 0x2) << 6) + (c & 0b00000000000000111111));
-                numBytes = 4;
-            }
-            char *printable = new char[numBytes];
-            Size j = 0;
-            while(j < numBytes) {
-                switch(j) {
-                    case 0:
-                        printable[j] = byte1;
-                        break;
-                    case 1:
-                        printable[j] = byte2;
-                        break;
-                    case 2:
-                        printable[j] = byte3;
-                        break;
-                    case 3:
-                        printable[j] = byte4;
-                        break;
-                    default:;
-                }
-                j++;
-            }
-            stream.write(printable, numBytes);
-            delete[] printable;
-        }
+                                                        SuperString::Size endIndex) const {
+    switch(this->_kind) {
+        case Kind::SUBSTRING:
+            return this->_container._substring._sequence->print(stream,
+                                                                this->_container._substring._startIndex + startIndex,
+                                                                this->_container._substring._startIndex + endIndex);
+        case Kind::CONTENTED:
+            SuperString::UTF32::print(stream, ((Byte *) this->_container._contented._data), startIndex, endIndex);
+            return TRUE;
     }
-    // TODO:
-    return FALSE;
 }
 
 SuperString SuperString::SubstringSequence::trim() const {
@@ -941,28 +1067,28 @@ SuperString SuperString::SubstringSequence::trimRight() const {
 SuperString::Size SuperString::SubstringSequence::keepingCost() const {
     if(this->_kind == Kind::SUBSTRING) {
         return sizeof(SubstringSequence) + this->_container._substring._sequence->keepingCost();
+    } else {
+        return sizeof(SubstringSequence) + this->_container._contented._length * sizeof(int);
     }
-    return 0;
 }
 
 SuperString::Size SuperString::SubstringSequence::reconstructionCost() const {
     if(this->_kind == Kind::SUBSTRING) {
         return sizeof(SubstringSequence) +
-               (this->_container._substring._endIndex - this->_container._substring._startIndex) * 2;
+               (this->_container._substring._endIndex - this->_container._substring._startIndex) * sizeof(int);
     }
     return 0;
 }
 
 void SuperString::SubstringSequence::reconstruct(const StringSequence *sequence) const {
-    SubstringSequence *self = (SubstringSequence *) (Size) this;
-    Size length = this->length();
-    self->_container._contented._chars = new int[length];
-    for(Size i = 0; i < length; i++) {
-        self->_container._contented._chars[i] = this->codeUnitAt(i).ok();
-    }
+    struct SubstringMetaInfo old = this->_container._substring;
+    SubstringSequence *self = ((SubstringSequence *) ((Size) this));
     self->_kind = Kind::CONTENTED;
-    self->_container._contented._length = length;
-    std::cout << "re\n";
+    self->_container._contented._length = old._endIndex - old._startIndex;
+    self->_container._contented._data = new int[self->_container._contented._length];
+    for(Size i = 0; i < self->_container._contented._length; i++) {
+        self->_container._contented._data[i] = old._sequence->codeUnitAt(old._startIndex + i).ok();
+    }
 }
 
 //*-- SuperString::ConcatenationSequence (internal)
@@ -976,6 +1102,7 @@ SuperString::ConcatenationSequence::ConcatenationSequence(const StringSequence *
 }
 
 SuperString::ConcatenationSequence::~ConcatenationSequence() {
+    this->reconstructReferencers();
     if(this->_kind == Kind::CONCATENATION) {
         this->_container._concatenation._left->removeReferencer(this);
         this->_container._concatenation._right->removeReferencer(this);
@@ -1032,7 +1159,7 @@ SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream
 }
 
 SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream, SuperString::Size startIndex,
-                                               SuperString::Size endIndex) const {
+                                                            SuperString::Size endIndex) const {
     if(this->_kind == Kind::CONCATENATION) {
         if(startIndex < this->_container._concatenation._left->length()) {
             if(endIndex < this->_container._concatenation._left->length()) {
@@ -1121,6 +1248,7 @@ SuperString::MultipleSequence::MultipleSequence(const StringSequence *sequence, 
 }
 
 SuperString::MultipleSequence::~MultipleSequence() {
+    this->reconstructReferencers();
     if(this->_kind == Kind::MULTIPLE) {
         this->_container._multiple._sequence->removeReferencer(this);
         if(this->_container._multiple._sequence->refCount() == 0 && this->freeingCost() < this->keepingCost()) {
@@ -1171,7 +1299,7 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream) con
 }
 
 SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, SuperString::Size startIndex,
-                                          SuperString::Size endIndex) const {
+                                                       SuperString::Size endIndex) const {
     if(this->_kind == Kind::MULTIPLE) {
         Bool printing = FALSE;
         Size unitLength = this->_container._multiple._sequence->length();
@@ -1276,7 +1404,8 @@ void SuperString::ASCII::print(std::ostream &stream, const SuperString::Byte *by
     stream.write(((char *) (bytes + startIndex)), endIndex - startIndex);
 }
 
-SuperString::Pair<SuperString::Size, SuperString::Size> SuperString::ASCII::trim(const SuperString::Byte *bytes, SuperString::Size length) {
+SuperString::Pair<SuperString::Size, SuperString::Size>
+SuperString::ASCII::trim(const SuperString::Byte *bytes, SuperString::Size length) {
     Size startIndex = 0;
     Size endIndex = length;
     char c = *(bytes + startIndex);
@@ -1540,6 +1669,84 @@ void SuperString::UTF16BE::print(std::ostream &stream, const SuperString::Byte *
         }
         i++;
     }
+}
+
+// SuperString::UTF32
+SuperString::Size SuperString::UTF32::length(const SuperString::Byte *bytes) {
+    const Byte *pointer = bytes;
+    while(*((int *) pointer) != 0x00) {
+        pointer += 4;
+    }
+    return (pointer - bytes) / 4;
+}
+
+SuperString::Pair<SuperString::Size, SuperString::Size> SuperString::UTF32::lengthAndMemoryLength(
+        const SuperString::Byte *bytes) {
+    Size length = 0;
+    const Byte *pointer = bytes;
+    while(*((int *) pointer) != 0x00) {
+        pointer += 4;
+        length++;
+    }
+    return Pair<Size, Size>(length, pointer - bytes + 4);
+}
+
+int SuperString::UTF32::codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index) {
+    return *(((int *) bytes) + index);
+}
+
+void SuperString::UTF32::print(std::ostream &stream, const SuperString::Byte *bytes) {
+    const Byte *pointer = bytes;
+    while(*((int *) pointer) != 0x00) {
+        int codeUnit = *((int *) pointer);
+        Pair<Byte *, Size> encoded = SuperString::UTF8::codeUnitToChar(codeUnit);
+        stream.write((const char *) encoded.first(), encoded.second());
+        delete encoded.first();
+        pointer += 4;
+    }
+}
+
+void SuperString::UTF32::print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
+                               SuperString::Size endIndex) {
+    for(Size i = startIndex; i < endIndex; i++) {
+        int codeUnit = *(((int *) bytes) + i);
+        Pair<Byte *, Size> encoded = SuperString::UTF8::codeUnitToChar(codeUnit);
+        stream.write((const char *) encoded.first(), encoded.second());
+        delete encoded.first();
+    }
+}
+
+SuperString::Pair<SuperString::Size, SuperString::Size>
+SuperString::UTF32::trim(const SuperString::Byte *bytes, SuperString::Size length) {
+    Size startIndex = 0;
+    Size endIndex = length;
+    int c = *(((const int *) bytes) + startIndex);
+    while(c != 0x00 && SuperString::isWhiteSpace(c)) {
+        c = *(((const int *) bytes) + ++startIndex);
+    }
+    c = *(((const int *) bytes) + (endIndex - 1));
+    while(endIndex > 0 && SuperString::isWhiteSpace(c)) {
+        c = *(((const int *) bytes) + (--endIndex - 1));
+    }
+    return Pair<Size, Size>(startIndex, endIndex);
+}
+
+SuperString::Size SuperString::UTF32::trimLeft(const SuperString::Byte *bytes) {
+    Size startIndex = 0;
+    int c = *(((const int *) bytes) + startIndex);
+    while(c != 0x00 && SuperString::isWhiteSpace(c)) {
+        c = *(((const int *) bytes) + ++startIndex);
+    }
+    return startIndex;
+}
+
+SuperString::Size SuperString::UTF32::trimRight(const SuperString::Byte *bytes, SuperString::Size length) {
+    Size endIndex = length;
+    int c = *(((const int *) bytes) + (endIndex - 1));
+    while(endIndex > 0 && SuperString::isWhiteSpace(c)) {
+        c = *(((const int *) bytes) + (--endIndex - 1));
+    }
+    return endIndex;
 }
 
 //
