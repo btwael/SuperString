@@ -369,9 +369,10 @@ private:
         virtual SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
 
-        virtual void print(std::ostream &stream) const = 0;
+        virtual SuperString::Bool print(std::ostream &stream) const = 0;
 
-        virtual void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
+        virtual SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
 
         /**
          * Returns the sequence without any leading and trailing whitespace.
@@ -399,6 +400,8 @@ private:
 
         // TODO: comment
         SuperString::Size refRelease();
+
+        SuperString::Size refCount() const;
 
         // TODO: comment
         void addReferencer(SuperString::ReferenceStringSequence *sequence) const;
@@ -432,9 +435,9 @@ private:
         virtual SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const = 0 /*override*/;
 
-        virtual void print(std::ostream &stream) const = 0 /*override*/;
+        virtual SuperString::Bool print(std::ostream &stream) const = 0 /*override*/;
 
-        virtual void
+        virtual SuperString::Bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0 /*override*/;
 
         virtual SuperString trim() const = 0 /*override*/;
@@ -457,14 +460,14 @@ private:
     //*-- ConstASCIISequence (internal)
     class ConstASCIISequence: public StringSequence {
     private:
-        const char *_chars;
+        const Byte *_bytes;
         SuperString::Size _length;
         SuperString::Bool _lengthComputed;
 
     public:
         //*- Constructors
 
-        ConstASCIISequence(const char *chars);
+        ConstASCIISequence(const Byte *bytes);
 
         //*- Destructor
 
@@ -485,9 +488,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -505,13 +509,13 @@ private:
     //*-- CopyASCIISequence (internal)
     class CopyASCIISequence: public StringSequence {
     private:
-        char *_chars;
+        Byte *_data;
         SuperString::Size _length;
 
     public:
         //*- Constructors
 
-        CopyASCIISequence(const char *chars);
+        CopyASCIISequence(const SuperString::Byte *chars);
 
         CopyASCIISequence(const SuperString::ConstASCIISequence *sequence);
 
@@ -534,9 +538,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -552,14 +557,14 @@ private:
     //*--ConstUTF8Sequence (internal)
     class ConstUTF8Sequence: public StringSequence {
     private:
-        const char *_chars;
+        const Byte *_bytes;
         SuperString::Size _length;
         SuperString::Bool _lengthComputed;
 
     public:
         //*- Constructors
 
-        ConstUTF8Sequence(const char *chars);
+        ConstUTF8Sequence(const Byte *chars);
 
         //*- Destructor
 
@@ -580,9 +585,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -600,15 +606,14 @@ private:
     //*-- CopyUTF8Sequence (internal)
     class CopyUTF8Sequence: public StringSequence {
     private:
-        char *_chars;
+        Byte *_data;
         SuperString::Size _length;
-        SuperString::Bool _lengthComputed;
-        SuperString::Size _memLength;
+        SuperString::Size _memoryLength;
 
     public:
         //*- Constructors
 
-        CopyUTF8Sequence(const char *chars);
+        CopyUTF8Sequence(const SuperString::Byte *chars);
 
         CopyUTF8Sequence(const SuperString::ConstUTF8Sequence *sequence);
 
@@ -631,9 +636,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -645,9 +651,6 @@ private:
 
         // inherited: SuperString::Size freeingCost() const;
     };
-
-    static Result<SuperString::Pair<Size, Size>, SuperString::Error>
-    _UTF8_offsetOfRange(const char *chars, Size startIndex, Size endIndex);
 
     //*-- ConstUTF16Sequence (internal)
     class ConstUTF16Sequence: public StringSequence {
@@ -680,9 +683,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -729,9 +733,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -759,7 +764,7 @@ private:
                 Size _endIndex;
             } _substring;
             struct {
-                char *_chars;
+                int *_chars;
                 Size _length;
             } _contented;
         } _container;
@@ -784,9 +789,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -843,9 +849,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -900,9 +907,10 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        void print(std::ostream &stream) const /*override*/;
+        SuperString::Bool print(std::ostream &stream) const /*override*/;
 
-        void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        SuperString::Bool
+        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -920,6 +928,46 @@ private:
     };
 
     inline static SuperString::Bool isWhiteSpace(int codeUnit);
+
+    //
+    class ASCII {
+    public:
+        static SuperString::Size length(const SuperString::Byte *bytes);
+
+        static int codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
+                          SuperString::Size endIndex);
+
+        static SuperString::Pair<Size, Size> trim(const SuperString::Byte *bytes, SuperString::Size length);
+
+        static Size trimLeft(const SuperString::Byte *bytes);
+
+        static Size trimRight(const SuperString::Byte *bytes, SuperString::Size length);
+    };
+
+    class UTF8 {
+    public:
+        static SuperString::Size length(const SuperString::Byte *bytes);
+
+        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        lengthAndMemoryLength(const SuperString::Byte *bytes);
+
+        static SuperString::Result<int, SuperString::Error>
+        codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
+                          SuperString::Size endIndex);
+
+        static SuperString::Result<SuperString::Pair<SuperString::Size, SuperString::Size>, SuperString::Error>
+        rangeIndexes(const SuperString::Byte *bytes, SuperString::Size startIndex, SuperString::Size endIndex);
+
+        // TODO: add customized trims methods
+    };
 };
 
 // External Operators
