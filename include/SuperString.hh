@@ -26,7 +26,8 @@ public:
     enum class Encoding {
         ASCII,
         UTF8,
-        UTF16 // this is UTF8BE TODO: support 4 bytes utf8, improve LE&BE version
+        UTF16BE
+        // TODO: support 4 bytes utf16, improve LE&BE version
     };
 
     //*-- Error
@@ -270,7 +271,7 @@ private:
 
     class CopyUTF8Sequence;
 
-    class CopyUTF16Sequence;
+    class CopyUTF16BESequence;
 
     //*-- SuperString
     StringSequence *_sequence;
@@ -652,21 +653,21 @@ private:
         // inherited: SuperString::Size freeingCost() const;
     };
 
-    //*-- ConstUTF16Sequence (internal)
-    class ConstUTF16Sequence: public StringSequence {
+    //*-- ConstUTF16BESequence (internal)
+    class ConstUTF16BESequence: public StringSequence {
     private:
-        const Byte *_chars;
+        const Byte *_bytes;
         SuperString::Size _length;
         SuperString::Bool _lengthComputed;
 
     public:
         //*- Constructors
 
-        ConstUTF16Sequence(const SuperString::Byte *chars);
+        ConstUTF16BESequence(const SuperString::Byte *bytes);
 
         //*- Destructor
 
-        ~ConstUTF16Sequence();
+        ~ConstUTF16BESequence();
 
         //*- Getters
 
@@ -698,25 +699,26 @@ private:
 
         // inherited:SuperString:: Size freeingCost() const;
 
-        friend class CopyUTF16Sequence;
+        friend class CopyUTF16BESequence;
     };
 
-    //*-- CopyUTF16Sequence (internal)
-    class CopyUTF16Sequence: public StringSequence {
+    //*-- CopyUTF16BESequence (internal)
+    class CopyUTF16BESequence: public StringSequence {
     private:
-        Byte *_chars;
+        Byte *_data;
         SuperString::Size _length;
+        SuperString::Size _memoryLength;
 
     public:
         //*- Constructors
 
-        CopyUTF16Sequence(const SuperString::Byte *chars);
+        CopyUTF16BESequence(const SuperString::Byte *bytes);
 
-        CopyUTF16Sequence(const SuperString::ConstUTF16Sequence *sequence);
+        CopyUTF16BESequence(const SuperString::ConstUTF16BESequence *sequence);
 
         //*- Destructor
 
-        ~CopyUTF16Sequence();
+        ~CopyUTF16BESequence();
 
         //*- Getters
 
@@ -941,11 +943,12 @@ private:
         static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
                           SuperString::Size endIndex);
 
-        static SuperString::Pair<Size, Size> trim(const SuperString::Byte *bytes, SuperString::Size length);
+        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        trim(const SuperString::Byte *bytes, SuperString::Size length);
 
-        static Size trimLeft(const SuperString::Byte *bytes);
+        static SuperString::Size trimLeft(const SuperString::Byte *bytes);
 
-        static Size trimRight(const SuperString::Byte *bytes, SuperString::Size length);
+        static SuperString::Size trimRight(const SuperString::Byte *bytes, SuperString::Size length);
     };
 
     class UTF8 {
@@ -965,6 +968,26 @@ private:
 
         static SuperString::Result<SuperString::Pair<SuperString::Size, SuperString::Size>, SuperString::Error>
         rangeIndexes(const SuperString::Byte *bytes, SuperString::Size startIndex, SuperString::Size endIndex);
+
+        static SuperString::Pair<SuperString::Byte *, SuperString::Size> codeUnitToChar(int c);
+
+        // TODO: add customized trims methods
+    };
+
+    class UTF16BE {
+    public:
+        static SuperString::Size length(const SuperString::Byte *bytes);
+
+        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        lengthAndMemoryLength(const SuperString::Byte *bytes);
+
+        static SuperString::Result<int, SuperString::Error>
+        codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size length);
+
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
+                          SuperString::Size endIndex);
 
         // TODO: add customized trims methods
     };
