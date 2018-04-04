@@ -458,7 +458,7 @@ private:
         // inherited: SuperString::Size freeingCost() const;
 
         // TODO: comment
-        virtual SuperString::Size reconstructionCost() const = 0;
+        virtual SuperString::Size reconstructionCost(const StringSequence *sequence) const = 0;
 
         // TODO: comment
         virtual void reconstruct(const StringSequence *sequence) const = 0;
@@ -859,14 +859,14 @@ private:
     private:
         enum class Kind {
             SUBSTRING,
-            CONTENTED
+            RECONSTRUCTED
         };
         struct SubstringMetaInfo {
             const StringSequence *_sequence;
             Size _startIndex;
             Size _endIndex;
         };
-        struct ReconstructedSubstringMetaInfo {
+        struct ReconstructedMetaInfo {
             int *_data;
             Size _length;
         };
@@ -874,7 +874,7 @@ private:
         Kind _kind;
         union {
             struct SubstringMetaInfo _substring;
-            struct ReconstructedSubstringMetaInfo _contented;
+            struct ReconstructedMetaInfo _reconstructed;
         } _container;
 
     public:
@@ -912,7 +912,7 @@ private:
 
         // inherited: SuperString::Size freeingCost() const;
 
-        SuperString::Size reconstructionCost() const /*override*/;
+        SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
 
@@ -924,17 +924,35 @@ private:
     private:
         enum class Kind {
             CONCATENATION,
-            CONTENTED
+            LEFTRECONSTRUCTED,
+            RIGHTRECONSTRUCTED,
+            RECONSTRUCTED
         };
+        struct ConcatenationMetaInfo {
+            const StringSequence *_left;
+            const StringSequence *_right;
+        };
+        struct LeftReconstructedMetaInfo {
+            const StringSequence *_right;
+            int *_leftData;
+            Size _leftLength;
+        };
+        struct RightReconstructedMetaInfo {
+            const StringSequence *_left;
+            int *_rightData;
+            Size _rightLength;
+        };
+        struct ReconstructedMetaInfo {
+            int *_data;
+            Size _length;
+        };
+
         Kind _kind;
         union {
-            struct {
-                const StringSequence *_left;
-                const StringSequence *_right;
-            } _concatenation;
-            struct {
-
-            } _contented;
+            struct ConcatenationMetaInfo _concatenation;
+            struct LeftReconstructedMetaInfo _leftReconstructed;
+            struct RightReconstructedMetaInfo _rightReconstructed;
+            struct ReconstructedMetaInfo _reconstructed;
         } _container;
 
     public:
@@ -972,7 +990,7 @@ private:
 
         // inherited: SuperString::Size freeingCost() const;
 
-        SuperString::Size reconstructionCost() const /*override*/;
+        SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
     };
@@ -1030,7 +1048,7 @@ private:
 
         // inherited: SuperString::Size freeingCost() const;
 
-        SuperString::Size reconstructionCost() const /*override*/;
+        SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
     };
