@@ -27,8 +27,8 @@ public:
         ASCII,
         UTF8,
         UTF16BE,
-        // TODO: support 4 bytes utf16, improve LE&BE version
         UTF32
+        // TODO: support 4 bytes utf16, improve LE&BE version
     };
 
     //*-- Error
@@ -39,7 +39,8 @@ public:
         Unimplemented, // temporary
         Unexpected, // Something that never happen, Unreachable code
         RangeError,
-        InvalidByteSequence
+        InvalidByteSequence,
+        NotFound
     };
 
     //*-- Byte
@@ -166,6 +167,12 @@ public:
 
     //*- Getters
 
+    // TODO: comment
+    SuperString::Bool isEmpty() const;
+
+    // TODO: comment
+    SuperString::Bool isNotEmpty() const;
+
     /**
      * Returns the length of this string.
      */
@@ -183,6 +190,12 @@ public:
      */
     int compareTo(const SuperString &other) const;
 
+    // TODO: comment
+    SuperString::Result<int, SuperString::Error> indexOf(SuperString other) const;
+
+    // TODO: comment
+    SuperString::Result<int, SuperString::Error> lastIndexOf(SuperString other) const;
+
     /**
      * Returns the substring of this sequence that extends
      * from [startIndex], inclusive, to [endIndex], exclusive.
@@ -193,13 +206,13 @@ public:
     /**
      * Outputs the whole string to the given [stream].
      */
-    void print(std::ostream &stream) const;
+    SuperString::Bool print(std::ostream &stream) const;
 
     /**
      * Outputs the substring from [startIndex] to [endIndex]
      * to the given [stream].
      */
-    void print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const;
+    SuperString::Bool print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const;
 
     /**
      * Returns the string without any leading and trailing whitespace.
@@ -368,6 +381,10 @@ private:
          */
         virtual SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const = 0;
 
+        SuperString::Result<int, SuperString::Error> indexOf(SuperString other) const;
+
+        SuperString::Result<int, SuperString::Error> lastIndexOf(SuperString other) const;
+
         /**
          * Returns the substring of this sequence that extends
          * from [startIndex], inclusive, to [endIndex], exclusive.
@@ -402,11 +419,12 @@ private:
         SuperString::Size freeingCost() const;
 
         // TODO: comment
-        void refAdd();
+        void refAdd() const;
 
         // TODO: comment
-        SuperString::Size refRelease();
+        SuperString::Size refRelease() const;
 
+        // TODO: comment
         SuperString::Size refCount() const;
 
         // TODO: comment
@@ -415,7 +433,12 @@ private:
         // TODO: comment
         void removeReferencer(SuperString::ReferenceStringSequence *sequence) const;
 
+        // TODO: comment
         void reconstructReferencers();
+
+    private:
+
+        SuperString::Bool _substringMatches(SuperString::Size startIndex, SuperString other) const;
 
         friend class SuperString;
     };

@@ -1,10 +1,8 @@
-#include "SuperString.hh"
-
 /*-- imports --*/
 
+#include <SuperString.hh>
 // std
 #include <iostream> // The only thing we need, and just for printing
-#include <SuperString.hh>
 
 /*-- definitions --*/
 
@@ -28,6 +26,14 @@ SuperString::~SuperString() {
     if(this->_sequence != NULL && this->_sequence->refRelease() == 0 && this->freeingCost() < this->keepingCost()) {
         delete this->_sequence;
     }
+}
+
+SuperString::Bool SuperString::isEmpty() const {
+    return this->length() == 0;
+}
+
+SuperString::Bool SuperString::isNotEmpty() const {
+    return this->length() != 0;
 }
 
 SuperString::Size SuperString::length() const {
@@ -56,6 +62,20 @@ int SuperString::compareTo(const SuperString &other) const {
     return 0;
 }
 
+SuperString::Result<int, SuperString::Error> SuperString::indexOf(SuperString other) const {
+    if(this->_sequence != NULL) {
+        return this->_sequence->indexOf(other);
+    }
+    return Result<int, Error>(Error::NotFound);
+}
+
+SuperString::Result<int, SuperString::Error> SuperString::lastIndexOf(SuperString other) const {
+    if(this->_sequence != NULL) {
+        return this->_sequence->lastIndexOf(other);
+    }
+    return Result<int, Error>(Error::NotFound);
+}
+
 SuperString::Result<int, SuperString::Error> SuperString::codeUnitAt(SuperString::Size index) const {
     if(this->_sequence != NULL) {
         return this->_sequence->codeUnitAt(index);
@@ -71,16 +91,19 @@ SuperString::substring(SuperString::Size startIndex, SuperString::Size endIndex)
     return Result<SuperString, Error>(Error::Unexpected);
 }
 
-void SuperString::print(std::ostream &stream) const {
+SuperString::Bool SuperString::print(std::ostream &stream) const {
     if(this->_sequence != NULL) {
-        this->_sequence->print(stream);
+        return this->_sequence->print(stream);
     }
+    return TRUE;
 }
 
-void SuperString::print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const {
+SuperString::Bool
+SuperString::print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const {
     if(this->_sequence != NULL) {
-        this->_sequence->print(stream, startIndex, endIndex);
+        return this->_sequence->print(stream, startIndex, endIndex);
     }
+    return TRUE;
 }
 
 SuperString SuperString::trim() const {
@@ -202,17 +225,35 @@ SuperString::Bool SuperString::StringSequence::isNotEmpty() const {
     return this->length() > 0;
 }
 
-// TODO: make this const
-void SuperString::StringSequence::refAdd() {
-    this->_refCount++;
+SuperString::Result<int, SuperString::Error> SuperString::StringSequence::indexOf(SuperString other) const {
+    for(Size i = 0, length = this->length(); i < (length - other.length()); i++) {
+        if(this->_substringMatches(i, other)) {
+            return Result<int, Error>(i);
+        }
+    }
+    return Result<int, Error>(Error::NotFound);
 }
 
-// TODO: make this const
-SuperString::Size SuperString::StringSequence::refRelease() {
-    if(this->_refCount == 0) {
+SuperString::Result<int, SuperString::Error> SuperString::StringSequence::lastIndexOf(SuperString other) const {
+    for(Size i = this->length() - other.length(); i > 0; i--) {
+        if(this->_substringMatches(i - 1, other)) {
+            return Result<int, Error>(i - 1);
+        }
+    }
+    return Result<int, Error>(Error::NotFound);
+}
+
+void SuperString::StringSequence::refAdd() const {
+    StringSequence *self = (StringSequence *) (unsigned long) this;
+    self->_refCount++;
+}
+
+SuperString::Size SuperString::StringSequence::refRelease() const {
+    StringSequence *self = (StringSequence *) (unsigned long) this;
+    if(self->_refCount == 0) {
         return 0;
     }
-    return --this->_refCount;
+    return --self->_refCount;
 }
 
 SuperString::Size SuperString::StringSequence::refCount() const {
@@ -245,6 +286,23 @@ void SuperString::StringSequence::reconstructReferencers() {
         node->_data->reconstruct(this);
         node = node->_next;
     }
+}
+
+SuperString::Bool SuperString::StringSequence::_substringMatches(SuperString::Size startIndex,
+                                                                 SuperString other) const {
+    if(other.isEmpty()) {
+        return TRUE;
+    }
+    Size length = other.length();
+    if(startIndex + length > this->length()) {
+        return FALSE;
+    }
+    for(int i = 0; i < length; i++) {
+        if(this->codeUnitAt(i + startIndex).ok() != other.codeUnitAt(i).ok()) {
+            return FALSE;
+        }
+    }
+    return TRUE;
 }
 
 //*-- SuperString::ReferenceStringSequence (abstract|internal)
@@ -465,7 +523,7 @@ SuperString SuperString::ConstUTF8Sequence::trim() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(startIndex, endIndex).ok(); // TODO:
+    return this->substring(startIndex, endIndex).ok();
 }
 
 SuperString SuperString::ConstUTF8Sequence::trimLeft() const {
@@ -475,7 +533,7 @@ SuperString SuperString::ConstUTF8Sequence::trimLeft() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(++startIndex);
     }
-    return this->substring(startIndex, this->length()).ok(); // TODO:
+    return this->substring(startIndex, this->length()).ok();
 }
 
 SuperString SuperString::ConstUTF8Sequence::trimRight() const {
@@ -485,7 +543,7 @@ SuperString SuperString::ConstUTF8Sequence::trimRight() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(0, endIndex).ok(); // TODO:
+    return this->substring(0, endIndex).ok();
 }
 
 SuperString::Size SuperString::ConstUTF8Sequence::keepingCost() const {
@@ -566,7 +624,7 @@ SuperString SuperString::CopyUTF8Sequence::trim() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(startIndex, endIndex).ok(); // TODO:
+    return this->substring(startIndex, endIndex).ok();
 }
 
 SuperString SuperString::CopyUTF8Sequence::trimLeft() const {
@@ -576,7 +634,7 @@ SuperString SuperString::CopyUTF8Sequence::trimLeft() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(++startIndex);
     }
-    return this->substring(startIndex, this->length()).ok(); // TODO:
+    return this->substring(startIndex, this->length()).ok();
 }
 
 SuperString SuperString::CopyUTF8Sequence::trimRight() const {
@@ -586,7 +644,7 @@ SuperString SuperString::CopyUTF8Sequence::trimRight() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(0, endIndex).ok(); // TODO:
+    return this->substring(0, endIndex).ok();
 }
 
 SuperString::Size SuperString::CopyUTF8Sequence::keepingCost() const {
@@ -660,7 +718,7 @@ SuperString SuperString::ConstUTF16BESequence::trim() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(startIndex, endIndex).ok(); // TODO:
+    return this->substring(startIndex, endIndex).ok();
 }
 
 SuperString SuperString::ConstUTF16BESequence::trimLeft() const {
@@ -670,7 +728,7 @@ SuperString SuperString::ConstUTF16BESequence::trimLeft() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(++startIndex);
     }
-    return this->substring(startIndex, this->length()).ok(); // TODO:
+    return this->substring(startIndex, this->length()).ok();
 }
 
 SuperString SuperString::ConstUTF16BESequence::trimRight() const {
@@ -680,7 +738,7 @@ SuperString SuperString::ConstUTF16BESequence::trimRight() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(0, endIndex).ok(); // TODO:
+    return this->substring(0, endIndex).ok();
 }
 
 SuperString::Size SuperString::ConstUTF16BESequence::keepingCost() const {
@@ -762,7 +820,7 @@ SuperString SuperString::CopyUTF16BESequence::trim() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(startIndex, endIndex).ok(); // TODO:
+    return this->substring(startIndex, endIndex).ok();
 }
 
 SuperString SuperString::CopyUTF16BESequence::trimLeft() const {
@@ -772,7 +830,7 @@ SuperString SuperString::CopyUTF16BESequence::trimLeft() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(++startIndex);
     }
-    return this->substring(startIndex, this->length()).ok(); // TODO:
+    return this->substring(startIndex, this->length()).ok();
 }
 
 SuperString SuperString::CopyUTF16BESequence::trimRight() const {
@@ -782,7 +840,7 @@ SuperString SuperString::CopyUTF16BESequence::trimRight() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(0, endIndex).ok(); // TODO:
+    return this->substring(0, endIndex).ok();
 }
 
 SuperString::Size SuperString::CopyUTF16BESequence::keepingCost() const {
@@ -991,20 +1049,29 @@ SuperString::Result<int, SuperString::Error> SuperString::SubstringSequence::cod
 
 SuperString::Result<SuperString, SuperString::Error>
 SuperString::SubstringSequence::substring(SuperString::Size startIndex, SuperString::Size endIndex) const {
-    if(this->_kind == Kind::SUBSTRING) {
-        if((this->_container._substring._sequence->length() < (this->_container._substring._startIndex + startIndex)) ||
-           (this->_container._substring._sequence->length() < (this->_container._substring._startIndex + endIndex))) {
-            return Result<SuperString, Error>(Error::RangeError);
-        } else {
-            return Result<SuperString, Error>(SuperString(new SubstringSequence(this->_container._substring._sequence,
-                                                                                this->_container._substring._startIndex +
-                                                                                startIndex,
-                                                                                this->_container._substring._startIndex +
-                                                                                endIndex)));
-        }
+    switch(this->_kind) {
+        case Kind::SUBSTRING:
+            if((this->_container._substring._sequence->length() <
+                (this->_container._substring._startIndex + startIndex)) ||
+               (this->_container._substring._sequence->length() <
+                (this->_container._substring._startIndex + endIndex))) {
+                return Result<SuperString, Error>(Error::RangeError);
+            } else {
+                return Result<SuperString, Error>(
+                        SuperString(new SubstringSequence(this->_container._substring._sequence,
+                                                          this->_container._substring._startIndex +
+                                                          startIndex,
+                                                          this->_container._substring._startIndex +
+                                                          endIndex)));
+            }
+        case Kind::RECONSTRUCTED:
+            // TODO: General code, specify + repeated * times
+            if(this->length() < startIndex || this->length() < endIndex) {
+                return Result<SuperString, Error>(Error::RangeError);
+            }
+            SubstringSequence *sequence = new SubstringSequence(this, startIndex, endIndex);
+            return Result<SuperString, Error>(SuperString(sequence));
     }
-    // TODO:
-    return Result<SuperString, Error>(Error::Unimplemented);
 }
 
 SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream) const {
@@ -1043,7 +1110,7 @@ SuperString SuperString::SubstringSequence::trim() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(startIndex, endIndex).ok(); // TODO:
+    return this->substring(startIndex, endIndex).ok();
 }
 
 SuperString SuperString::SubstringSequence::trimLeft() const {
@@ -1053,7 +1120,7 @@ SuperString SuperString::SubstringSequence::trimLeft() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(++startIndex);
     }
-    return this->substring(startIndex, this->length()).ok(); // TODO:
+    return this->substring(startIndex, this->length()).ok();
 }
 
 SuperString SuperString::SubstringSequence::trimRight() const {
@@ -1063,7 +1130,7 @@ SuperString SuperString::SubstringSequence::trimRight() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(0, endIndex).ok(); // TODO:
+    return this->substring(0, endIndex).ok();
 }
 
 SuperString::Size SuperString::SubstringSequence::keepingCost() const {
@@ -1218,47 +1285,49 @@ SuperString::ConcatenationSequence::substring(SuperString::Size startIndex,
 }
 
 SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream) const {
+    Bool isOk = TRUE;
     switch(this->_kind) {
         case Kind::CONCATENATION:
-            this->_container._concatenation._left->print(stream);
-            this->_container._concatenation._right->print(stream);
+            isOk &= this->_container._concatenation._left->print(stream);
+            isOk &= this->_container._concatenation._right->print(stream);
             break;
         case Kind::LEFTRECONSTRUCTED:
             SuperString::UTF32::print(stream, (const Byte *) this->_container._leftReconstructed._leftData);
-            this->_container._leftReconstructed._right->print(stream);
+            isOk &= this->_container._leftReconstructed._right->print(stream);
             break;
         case Kind::RIGHTRECONSTRUCTED:
-            this->_container._rightReconstructed._left->print(stream);
+            isOk &= this->_container._rightReconstructed._left->print(stream);
             SuperString::UTF32::print(stream, (const Byte *) this->_container._rightReconstructed._rightData);
             break;
         case Kind::RECONSTRUCTED:
             SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data);
             break;
     }
-    return TRUE;
+    return isOk;
 }
 
 SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                             SuperString::Size endIndex) const {
+    Bool isOk = TRUE;
     switch(this->_kind) {
         case Kind::CONCATENATION:
             if(startIndex < this->_container._concatenation._left->length()) {
                 if(endIndex < this->_container._concatenation._left->length()) {
-                    this->_container._concatenation._left->print(stream, startIndex, endIndex);
+                    isOk &= this->_container._concatenation._left->print(stream, startIndex, endIndex);
                 } else {
-                    this->_container._concatenation._left->print(stream, startIndex,
-                                                                 this->_container._concatenation._left->length());
-                    this->_container._concatenation._right->print(stream, 0,
-                                                                  endIndex -
-                                                                  this->_container._concatenation._left->length());
+                    isOk &= this->_container._concatenation._left->print(stream, startIndex,
+                                                                         this->_container._concatenation._left->length());
+                    isOk &= this->_container._concatenation._right->print(stream, 0,
+                                                                          endIndex -
+                                                                          this->_container._concatenation._left->length());
                 }
             } else {
                 if((endIndex - this->_container._concatenation._left->length()) <
                    this->_container._concatenation._right->length()) {
-                    this->_container._concatenation._right->print(stream, startIndex -
-                                                                          this->_container._concatenation._left->length(),
-                                                                  endIndex -
-                                                                  this->_container._concatenation._left->length());
+                    isOk &= this->_container._concatenation._right->print(stream, startIndex -
+                                                                                  this->_container._concatenation._left->length(),
+                                                                          endIndex -
+                                                                          this->_container._concatenation._left->length());
                 }
             }
             break;
@@ -1270,26 +1339,26 @@ SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream
                 } else {
                     SuperString::UTF32::print(stream, (const Byte *) this->_container._leftReconstructed._leftData,
                                               startIndex, this->_container._leftReconstructed._leftLength);
-                    this->_container._leftReconstructed._right->print(stream, 0,
-                                                                      endIndex -
-                                                                      this->_container._leftReconstructed._leftLength);
+                    isOk &= this->_container._leftReconstructed._right->print(stream, 0,
+                                                                              endIndex -
+                                                                              this->_container._leftReconstructed._leftLength);
                 }
             } else {
                 if((endIndex - this->_container._leftReconstructed._leftLength) <
                    this->_container._leftReconstructed._right->length()) {
-                    this->_container._leftReconstructed._right->print(stream, startIndex -
-                                                                              this->_container._leftReconstructed._leftLength,
-                                                                      endIndex -
-                                                                      this->_container._leftReconstructed._leftLength);
+                    isOk &= this->_container._leftReconstructed._right->print(stream, startIndex -
+                                                                                      this->_container._leftReconstructed._leftLength,
+                                                                              endIndex -
+                                                                              this->_container._leftReconstructed._leftLength);
                 }
             }
             break;
         case Kind::RIGHTRECONSTRUCTED:
             if(startIndex < this->_container._rightReconstructed._left->length()) {
                 if(endIndex < this->_container._rightReconstructed._left->length()) {
-                    this->_container._rightReconstructed._left->print(stream, startIndex, endIndex);
+                    isOk &= this->_container._rightReconstructed._left->print(stream, startIndex, endIndex);
                 } else {
-                    this->_container._rightReconstructed._left->print(stream, startIndex,
+                    isOk &= this->_container._rightReconstructed._left->print(stream, startIndex,
                                                                       this->_container._rightReconstructed._left->length());
                     SuperString::UTF32::print(stream, (const Byte *) this->_container._rightReconstructed._rightData, 0,
                                               endIndex - this->_container._rightReconstructed._left->length());
@@ -1307,8 +1376,7 @@ SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream
             SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data, startIndex,
                                       endIndex);
     }
-    // TODO: check returned value correctness
-    return TRUE;
+    return isOk;
 }
 
 SuperString SuperString::ConcatenationSequence::trim() const {
@@ -1323,7 +1391,7 @@ SuperString SuperString::ConcatenationSequence::trim() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(startIndex, endIndex).ok(); // TODO:
+    return this->substring(startIndex, endIndex).ok();
 }
 
 SuperString SuperString::ConcatenationSequence::trimLeft() const {
@@ -1333,7 +1401,7 @@ SuperString SuperString::ConcatenationSequence::trimLeft() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(++startIndex);
     }
-    return this->substring(startIndex, this->length()).ok(); // TODO:
+    return this->substring(startIndex, this->length()).ok();
 }
 
 SuperString SuperString::ConcatenationSequence::trimRight() const {
@@ -1343,7 +1411,7 @@ SuperString SuperString::ConcatenationSequence::trimRight() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(0, endIndex).ok(); // TODO:
+    return this->substring(0, endIndex).ok();
 }
 
 SuperString::Size SuperString::ConcatenationSequence::keepingCost() const {
@@ -1616,7 +1684,7 @@ SuperString SuperString::MultipleSequence::trim() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(startIndex, endIndex).ok(); // TODO:
+    return this->substring(startIndex, endIndex).ok();
 }
 
 SuperString SuperString::MultipleSequence::trimLeft() const {
@@ -1626,7 +1694,7 @@ SuperString SuperString::MultipleSequence::trimLeft() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(++startIndex);
     }
-    return this->substring(startIndex, this->length()).ok(); // TODO:
+    return this->substring(startIndex, this->length()).ok();
 }
 
 SuperString SuperString::MultipleSequence::trimRight() const {
@@ -1636,7 +1704,7 @@ SuperString SuperString::MultipleSequence::trimRight() const {
     while(result.isOk() && SuperString::isWhiteSpace(result.ok())) {
         result = this->codeUnitAt(--endIndex - 1);
     }
-    return this->substring(0, endIndex).ok(); // TODO:
+    return this->substring(0, endIndex).ok();
 }
 
 SuperString::Size SuperString::MultipleSequence::keepingCost() const {
