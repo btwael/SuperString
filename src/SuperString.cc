@@ -1169,9 +1169,6 @@ SuperString::Size SuperString::ConcatenationSequence::length() const {
 
 SuperString::Result<int, SuperString::Error>
 SuperString::ConcatenationSequence::codeUnitAt(SuperString::Size index) const {
-    if(this->_kind == Kind::CONCATENATION) {
-
-    }
     switch(this->_kind) {
         case Kind::CONCATENATION:
             if(index < this->_container._concatenation._left->length()) {
@@ -1358,7 +1355,7 @@ SuperString::Size SuperString::ConcatenationSequence::keepingCost() const {
             return sizeof(ConcatenationSequence) + this->_container._leftReconstructed._leftLength * sizeof(int) +
                    this->_container._leftReconstructed._right->keepingCost();
         case Kind::RIGHTRECONSTRUCTED:
-            return sizeof(ConcatenationSequence) + this->_container._rightReconstructed._left->length() +
+            return sizeof(ConcatenationSequence) + this->_container._rightReconstructed._left->keepingCost() +
                    this->_container._rightReconstructed._rightLength * sizeof(int);
         case Kind::RECONSTRUCTED:
             return sizeof(ConcatenationSequence) + this->_container._reconstructed._length * sizeof(int);
@@ -1482,33 +1479,42 @@ SuperString::MultipleSequence::MultipleSequence(const StringSequence *sequence, 
 
 SuperString::MultipleSequence::~MultipleSequence() {
     this->reconstructReferencers();
-    if(this->_kind == Kind::MULTIPLE) {
-        this->_container._multiple._sequence->removeReferencer(this);
-        if(this->_container._multiple._sequence->refCount() == 0 && this->freeingCost() < this->keepingCost()) {
-            delete this->_container._multiple._sequence;
-        }
+    switch(this->_kind) {
+        case Kind::MULTIPLE:
+            this->_container._multiple._sequence->removeReferencer(this);
+            if(this->_container._multiple._sequence->refCount() == 0 &&
+               this->_container._multiple._sequence->freeingCost() <
+               this->_container._multiple._sequence->keepingCost()) {
+                delete this->_container._multiple._sequence;
+            }
+            break;
+        case Kind::RECONSTRUCTED:
+            delete this->_container._reconstructed._data;
+            break;
     }
 }
 
 SuperString::Size SuperString::MultipleSequence::length() const {
-    if(this->_kind == Kind::MULTIPLE) {
-        return this->_container._multiple._sequence->length() * this->_container._multiple._time;
+    switch(this->_kind) {
+        case Kind::MULTIPLE:
+            return this->_container._multiple._sequence->length() * this->_container._multiple._time;
+        case Kind::RECONSTRUCTED:
+            return this->_container._reconstructed._dataLength * this->_container._reconstructed._time;
     }
-    // TODO:
-    return 0;
 }
 
 SuperString::Result<int, SuperString::Error> SuperString::MultipleSequence::codeUnitAt(SuperString::Size index) const {
-    if(this->_kind == Kind::MULTIPLE) {
-        Size length = this->length();
-        if(index < length) {
-            return this->_container._multiple._sequence->codeUnitAt(
-                    index % this->_container._multiple._sequence->length());
+    Size length = this->length();
+    if(index < length) {
+        switch(this->_kind) {
+            case Kind::MULTIPLE:
+                return this->_container._multiple._sequence->codeUnitAt(
+                        index % this->_container._multiple._sequence->length());
+            case Kind::RECONSTRUCTED:
+                return this->_container._reconstructed._data[index % this->_container._reconstructed._dataLength];
         }
-        return Result<int, Error>(Error::RangeError);
     }
-    // TODO:
-    return Result<int, Error>(Error::Unimplemented);
+    return Result<int, Error>(Error::RangeError);
 }
 
 SuperString::Result<SuperString, SuperString::Error>
@@ -1523,42 +1529,79 @@ SuperString::MultipleSequence::substring(SuperString::Size startIndex,
 }
 
 SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream) const {
-    if(this->_kind == Kind::MULTIPLE) {
-        for(Size i = 0; i < this->_container._multiple._time; i++) {
-            this->_container._multiple._sequence->print(stream);
-        }
+    switch(this->_kind) {
+        case Kind::MULTIPLE:
+            for(Size i = 0; i < this->_container._multiple._time; i++) {
+                this->_container._multiple._sequence->print(stream);
+            }
+            break;
+        case Kind::RECONSTRUCTED:
+            for(Size i = 0; i < this->_container._multiple._time; i++) {
+                SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data);
+            }
+            break;
     }
-    return FALSE; // TODO
+    return TRUE;
 }
 
 SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                        SuperString::Size endIndex) const {
-    if(this->_kind == Kind::MULTIPLE) {
-        Bool printing = FALSE;
-        Size unitLength = this->_container._multiple._sequence->length();
-        for(Size i = 0; i < this->_container._multiple._time; i++) {
-            Size iterationStartIndex = i * unitLength;
-            Size iterationEndIndex = (i + 1) * unitLength;
-            if(printing == FALSE) {
-                if(iterationStartIndex <= startIndex) {
-                    if(endIndex < iterationEndIndex) {
-                        this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
-                                                                    endIndex - iterationStartIndex);
-                        break;
-                    } else {
-                        printing = TRUE;
-                        this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
-                                                                    unitLength);
+    Bool printing = FALSE;
+    Size unitLength;
+    switch(this->_kind) {
+        case Kind::MULTIPLE:
+            unitLength = this->_container._multiple._sequence->length();
+            for(Size i = 0; i < this->_container._multiple._time; i++) {
+                Size iterationStartIndex = i * unitLength;
+                Size iterationEndIndex = (i + 1) * unitLength;
+                if(printing == FALSE) {
+                    if(iterationStartIndex <= startIndex) {
+                        if(endIndex < iterationEndIndex) {
+                            this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
+                                                                        endIndex - iterationStartIndex);
+                            break;
+                        } else {
+                            printing = TRUE;
+                            this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
+                                                                        unitLength);
+                        }
+                    }
+                } else {
+                    if(endIndex <= iterationEndIndex) {
+                        this->_container._multiple._sequence->print(stream, 0, endIndex - iterationStartIndex);
                     }
                 }
-            } else {
-                if(endIndex <= iterationEndIndex) {
-                    this->_container._multiple._sequence->print(stream, 0, endIndex - iterationStartIndex);
+            }
+            break;
+        case Kind::RECONSTRUCTED:
+            unitLength = this->_container._reconstructed._dataLength;
+            for(Size i = 0; i < this->_container._reconstructed._time; i++) {
+                Size iterationStartIndex = i * unitLength;
+                Size iterationEndIndex = (i + 1) * unitLength;
+                if(printing == FALSE) {
+                    if(iterationStartIndex <= startIndex) {
+                        if(endIndex < iterationEndIndex) {
+                            SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data,
+                                                      startIndex - iterationStartIndex,
+                                                      endIndex - iterationStartIndex);
+                            break;
+                        } else {
+                            printing = TRUE;
+                            SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data,
+                                                      startIndex - iterationStartIndex,
+                                                      unitLength);
+                        }
+                    }
+                } else {
+                    if(endIndex <= iterationEndIndex) {
+                        SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data,
+                                                  0, endIndex - iterationStartIndex);
+                    }
                 }
             }
-        }
+            break;
     }
-    return FALSE; // TODO
+    return TRUE;
 }
 
 SuperString SuperString::MultipleSequence::trim() const {
@@ -1597,22 +1640,45 @@ SuperString SuperString::MultipleSequence::trimRight() const {
 }
 
 SuperString::Size SuperString::MultipleSequence::keepingCost() const {
-    if(this->_kind == Kind::MULTIPLE) {
-        return sizeof(SubstringSequence) + this->_container._multiple._sequence->keepingCost();
+    switch(this->_kind) {
+        case Kind::MULTIPLE:
+            return sizeof(MultipleSequence) + this->_container._multiple._sequence->keepingCost();
+        case Kind::RECONSTRUCTED:
+            return sizeof(MultipleSequence) + this->_container._reconstructed._dataLength * sizeof(int);
     }
     return 0;
 }
 
 SuperString::Size SuperString::MultipleSequence::reconstructionCost(const StringSequence *sequence) const {
-    if(this->_kind == Kind::MULTIPLE) {
-        return sizeof(SubstringSequence) +
-               this->_container._multiple._sequence->length() * this->_container._multiple._time * 2;
+    switch(this->_kind) {
+        case Kind::MULTIPLE:
+            return sizeof(SubstringSequence) +
+                   this->_container._multiple._sequence->length() * this->_container._multiple._time * 2;
+        case Kind::RECONSTRUCTED:
+            return 0;
     }
-    return 0;
 }
 
 void SuperString::MultipleSequence::reconstruct(const StringSequence *sequence) const {
-
+    MultipleSequence *self = ((MultipleSequence *) ((Size) this));
+    if(self->_kind == Kind::MULTIPLE) {
+        struct MultipleMetaInfo old = self->_container._multiple;
+        if(sequence == old._sequence) {
+            struct ReconstructedMetaInfo nw;
+            nw._time = old._time;
+            nw._dataLength = old._sequence->length();
+            nw._data = new int[nw._dataLength];
+            for(Size i = 0; i < nw._dataLength; i++) {
+                nw._data[i] = old._sequence->codeUnitAt(i).ok();
+            }
+            old._sequence->removeReferencer(self);
+            if(old._sequence->refCount() == 0 && old._sequence->freeingCost() < old._sequence->keepingCost()) {
+                delete old._sequence;
+            }
+            self->_kind = Kind::RECONSTRUCTED;
+            self->_container._reconstructed = nw;
+        }
+    }
 }
 
 //*-- SuperString::ASCII

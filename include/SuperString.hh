@@ -998,19 +998,24 @@ private:
     //*-- MultipleSequence (internal)
     class MultipleSequence: public ReferenceStringSequence {
     private:
+        struct MultipleMetaInfo {
+            Size _time;
+            const StringSequence *_sequence;
+        };
+        struct ReconstructedMetaInfo {
+            Size _time;
+            int *_data;
+            Size _dataLength;
+        };
         enum class Kind {
             MULTIPLE,
-            CONTENTED
+            RECONSTRUCTED
         };
+
         Kind _kind;
         union {
-            struct {
-                Size _time;
-                const StringSequence *_sequence;
-            } _multiple;
-            struct {
-
-            } _contented;
+            struct MultipleMetaInfo _multiple;
+            struct ReconstructedMetaInfo _reconstructed;
         } _container;
 
     public:
