@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>SuperString - The most optimized string library for C++</title>
+
+        <!-- styles -->
+        <link rel="stylesheet" type="text/css" href="./css/pure.v0.5.0.min.css">
+        <link rel="stylesheet" type="text/css" href="./css/prismjs.v1.13.0.min.css">
+        <link rel="stylesheet" type="text/css" href="./css/style.css">
+    </head>
+    <body>
+        <!-- Github Ribbon -->
+        <a href="https://github.com/btwael/SuperString"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+        <!-- page content -->
+        <div class="center">
+            <div class="header">
+                <h1>SuperString</h1>
+                <h4>by <a href="https://github.com/btwael">Wael Boutglay</a></h4>
+            </div>
+            <div class="content">
+                <!-- Introduction -->
+                <h1 class="content-subhead">Introduction</h1>
+                <p>SuperString is an efficient string library for C++, that achieves a remarquable memory and CPU optimization.</p>
+                <p>SuperString uses <a href="#">Rope (data structure)</a> and game theory techniques.</p>
+                <!-- Features -->
+                <h1 class="content-subhead">Features</h1>
+                <ul>
+                    <li><b>Fast</b> and <b>Memory-optimized</b>.</li>
+                    <li>Automatically <b>garabage collected</b>.</li>
+                    <li>Rich API</li>
+                    <li>Easy to integrate and use.</li>
+                </ul>
+                <!-- Install -->
+                <h1 class="content-subhead">Install and use</h1>
+                <h2 class="content-subhead2">Using CMake</h2>
+                <p>In your project, clones <code>SuperString</code> to a directory where third-party libraries live (let's call it <code>ext</code>).
+                <pre><code class="language-bash">mkdir ext && cd ext
+git clone https://github.com/btwael/SuperString.git</code></pre>
+                <p>Now, you will need to add those lines to your <code>CMakeLists.txt</code></p>
+                <pre><code class="language-makefile"># include SuperString
+add_subdirectory(ext/SuperString)
+
+# add SuperString headers to include directory
+include_directories(ext/SuperString/include)
+
+# link your executable against SuperString 
+target_link_libraries(myexecutable SuperString)</code></pre>
+            </div>
+        </div>
+
+        <!-- scripts -->
+        <script type="text/javascript" src="./js/prismjs.v1.13.0.min.js"></script>
+    </body>
+</html>
