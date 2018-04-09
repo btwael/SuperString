@@ -146,38 +146,182 @@ int main(int argc, char const *argv[]) {
 
                 <!-- API -> methods -> print() -->
                 <h3 class="content-subhead3">print(stream)</h3>
+                <div class="func-prototype">
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream) <span class="modifier">const</span>;
+                </div>
+                <p>Prints this string to the given stream.</p>
+
                 <!-- API -> methods -> print() -->
                 <h3 class="content-subhead3">print(stream, startIndex, endIndex)</h3>
+                <div class="func-prototype">
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> startIndex, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> endIndex) <span class="modifier">const</span>;
+                </div>
+                <p>Prints a substring of this string that starts at startIndex, inclusive and end at endIndex, exclusive.</p>
+
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3">substring(startIndex, endIndex)</h3>
+                <div class="func-prototype">
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">substring</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> startIndex, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> endIndex) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the substring of this string that extends from startIndex, inclusive, to endIndex, exclusive.</p>
+
                 <!-- API -> methods -> trim() -->
                 <h3 class="content-subhead3">trim()</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">trim</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the string without any leading and trailing whitespace.</p>
+
                 <!-- API -> methods -> trimLeft() -->
                 <h3 class="content-subhead3">trimLeft()</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">trimLeft</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the string without any leading whitespace.</p>
+
                 <!-- API -> methods -> trimRight() -->
                 <h3 class="content-subhead3">trimRight()</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">trimRight</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the string without any trailing whitespace.</p>
 
                 <!-- API ->  operators -->
                 <h2 class="content-subhead2">Operators</h2>
                 <!-- API -> operators -> * -->
                 <h3 class="content-subhead3">operator *</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">operator*</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> times) <span class="modifier">const</span>;
+                </div>
+                <p>Creates a new string that concatenate this string with itself a number of times.</p>
+
                 <!-- API -> operators -> + -->
                 <h3 class="content-subhead3">operator +</h3>
+                <div class="func-prototype">
+                    SuperString <span class="token">operator+</span>(<span class="modifier">const</span> SuperString &amp;other) <span class="modifier">const</span>;
+                </div>
+                <p>Creates a new string by concatenating this string with other.</p>
 
                 <!-- API ->  nested types -->
                 <h2 class="content-subhead2" id="c-api-types">Nested types</h2>
                 <!-- API -> types -> encoding -->
                 <h3 class="content-subhead3" id="c-api-types-encoding">SuperString::Encoding</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    enum class Encoding {
+        ASCII,
+        UTF8,
+        UTF16BE,
+        UTF32
+    };
+...
+};
+</code></pre>
+
                 <!-- API -> types -> error -->
                 <h3 class="content-subhead3" id="c-api-types-error">SuperString::Error</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    enum class Error {
+        Unimplemented,
+        Unexpected, // Something that never happens, Unreachable code
+        RangeError,
+        InvalidByteSequence,
+        NotFound
+    };
+...
+};
+</code></pre>
+
                 <!-- API -> types -> byte -->
                 <h3 class="content-subhead3" id="c-api-types-byte">SuperString::Byte</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    typedef unsigned char Byte;
+...
+};
+</code></pre>
+
                 <!-- API -> types -> size -->
                 <h3 class="content-subhead3" id="c-api-types-size">SuperString::Size</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    typedef unsigned long Byte;
+...
+};
+</code></pre>
+
                 <!-- API -> types -> bool -->
                 <h3 class="content-subhead3" id="c-api-types-bool">SuperString::Bool</h3>
+                <p>This type is defined as fellow:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    typedef unsigned char Bool;
+    static const Bool FALSE = ((Bool) 0);
+    static const Bool TRUE = ((Bool) 1);
+...
+};
+</code></pre>
+
                 <!-- API -> types -> result -->
                 <h3 class="content-subhead3" id="c-api-types-result">SuperString::Result&lt;T, E></h3>
+                <p>This type is inspired from Rust type <span class="inlinehl">std::Result&lt;T, E></span>, and defined as:</p>
+                <pre><code class="language-cpp">class SuperString {
+...
+    template&lt;class T, class E>
+    class Result {
+    private:
+        char *_ok;
+        char *_err;
+
+    public:
+        Result(T ok);
+
+        Result(E err);
+
+        Result(const SuperString::Result<T, E> &amp;other) /*copy*/;
+
+        ~Result();
+
+        /**
+         * Returns the error value.
+         */
+        E err() const;
+
+        /**
+         * Returns `TRUE` if the result is Ok.
+         */
+        SuperString::Bool isErr() const;
+
+        /**
+         * Returns `TRUE` if the result is Err.
+         */
+        SuperString::Bool isOk() const;
+
+        /**
+         * Returns the success value.
+         */
+        T ok() const;
+
+        /**
+         * Sets this to Err with given [err] value.
+         */
+        void err(E err);
+
+        /**
+         * Sets this to Ok with given [ok] value.
+         */
+        void ok(T ok);
+
+        SuperString::Result&lt;T, E> &amp;operator=(const SuperString::Result&lt;T, E> &amp;other);
+    };
+...
+};
+</code></pre>
             </div>
         </div>
 
