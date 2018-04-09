@@ -49,7 +49,7 @@ include_directories(ext/SuperString/include)
 target_link_libraries(myexecutable SuperString)</code></pre>
 
                 <h2 class="content-subhead2">Without CMake</h2>
-                <p>The header file that contains SuperString declarations is <span class="inlinehl">SuperString/include/SuperString.hh</span>, the source file that contains the definitions <span class="inlinehl">SuperString/src/SuperString.cc</span>, use them as you prefer.</p>
+                <p>The header file that contains SuperString declarations is <span class="inlinehl">SuperString/include/SuperString.hh</span>, the source file that contains the definitions is <span class="inlinehl">SuperString/src/SuperString.cc</span>, use them as you prefer.</p>
 
                 <!-- API -->
                 <h1 class="content-subhead">API</h1>
@@ -81,23 +81,69 @@ int main(int argc, char const *argv[]) {
                 <h2 class="content-subhead2">Static methods</h2>
                 <!-- API -> static -> SuperString::Const -->
                 <h3 class="content-subhead3">SuperString::Const</h3>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Const</span>(<span class="modifier">const</span> <span class="keyword">char</span> *chars, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Const</span>(<span class="modifier">const</span> SuperString::<a class="keyword" href="#c-api-types-byte">Byte</a> *bytes, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <p>This static method creates a new SuperString from a const sequence of characters of a given <a href="#c-api-types-encoding">supported encoding</a>, the encoding paramter has <span class="inlinehl">SuperString::Encoding::UTF8</span> as default value. This method does not replicate string data in memory</p>
+
                 <!-- API -> static SuperString::Copy -->
                 <h3 class="content-subhead3">SuperString::Copy</h3>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Copy</span>(<span class="modifier">const</span> <span class="keyword">char</span> *chars, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <div class="func-prototype">
+                    <span class="modifier">static</span> SuperString SuperString::<span class="token">Copy</span>(<span class="modifier">const</span> SuperString::<a class="keyword" href="#c-api-types-byte">Byte</a> *bytes, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
+                </div>
+                <p>This static method creates a new SuperString from a const sequence of characters of a given <a href="#c-api-types-encoding">supported encoding</a>, the encoding paramter has <span class="inlinehl">SuperString::Encoding::UTF8</span> as default value. This method copys the given sequence to a new allocated memory space.</p>
+
 
                 <!-- API ->  methods -->
-                <h2 class="content-subhead2">Static methods</h2>
+                <h2 class="content-subhead2">Methods</h2>
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3">codeUnitAt(index)</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;<a class="keyword">int</a>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">codeUnitAt</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> index) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the code unit at the given index, if index is less than the length of the string, if not, it returns <span class="inlinehl">SuperString::Error::RangeError</span>.</p>
+
                 <!-- API -> methods -> indexOf() -->
                 <h3 class="content-subhead3">indexOf(pattern)</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;SuperString, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">indexOf</span>(SuperString other) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the position of the first occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
+
                 <!-- API -> methods -> isEmpty() -->
                 <h3 class="content-subhead3">isEmpty()</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-bool">Bool</a> <span class="token">isEmpty</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns true if this string is empty.</p>
+
                 <!-- API -> methods -> isNotEmpty() -->
                 <h3 class="content-subhead3">isNotEmpty()</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-bool">Bool</a> <span class="token">isNotEmpty</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns true if this string is not empty.</p>
+
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3">lastIndexOf(pattern)</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;SuperString, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">lastIndexOf</span>(SuperString other) <span class="modifier">const</span>;
+                </div>
+                <p>Returns the position of the last occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
+
                 <!-- API -> methods -> length() -->
                 <h3 class="content-subhead3">length()</h3>
+                <div class="func-prototype">
+                    SuperString::<a class="keyword" href="#c-api-types-size">Size</a> <span class="token">length</span>() <span class="modifier">const</span>;
+                </div>
+                <p>Returns the length of this string.</p>
+
                 <!-- API -> methods -> print() -->
                 <h3 class="content-subhead3">print(stream)</h3>
                 <!-- API -> methods -> print() -->
@@ -117,6 +163,21 @@ int main(int argc, char const *argv[]) {
                 <h3 class="content-subhead3">operator *</h3>
                 <!-- API -> operators -> + -->
                 <h3 class="content-subhead3">operator +</h3>
+
+                <!-- API ->  nested types -->
+                <h2 class="content-subhead2" id="c-api-types">Nested types</h2>
+                <!-- API -> types -> encoding -->
+                <h3 class="content-subhead3" id="c-api-types-encoding">SuperString::Encoding</h3>
+                <!-- API -> types -> error -->
+                <h3 class="content-subhead3" id="c-api-types-error">SuperString::Error</h3>
+                <!-- API -> types -> byte -->
+                <h3 class="content-subhead3" id="c-api-types-byte">SuperString::Byte</h3>
+                <!-- API -> types -> size -->
+                <h3 class="content-subhead3" id="c-api-types-size">SuperString::Size</h3>
+                <!-- API -> types -> bool -->
+                <h3 class="content-subhead3" id="c-api-types-bool">SuperString::Bool</h3>
+                <!-- API -> types -> result -->
+                <h3 class="content-subhead3" id="c-api-types-result">SuperString::Result&lt;T, E></h3>
             </div>
         </div>
 
