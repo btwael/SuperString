@@ -60,6 +60,25 @@ a:visited {
     color: #888;
 }
 
+.func-prototype {
+    background-color: rgb(255, 238, 188);
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 2px;
+}
+
+.func-prototype .keyword {
+    color: #07a;
+}
+
+.func-prototype .modifier {
+    color: rgb(220, 51, 29);
+}
+
+.func-prototype .token {
+    color: #DD4A68;
+}
+
 .inlinehl {
     display: inline-block;
     background-color: rgb(246, 242, 240);
