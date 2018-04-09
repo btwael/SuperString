@@ -35,10 +35,10 @@
                 <!-- Install -->
                 <h1 class="content-subhead">Install and use</h1>
                 <h2 class="content-subhead2">Using CMake</h2>
-                <p>In your project, clones <code>SuperString</code> to a directory where third-party libraries live (let's call it <code>ext</code>).
+                <p>In your project, clones <span class="inlinehl">SuperString</span> to a directory where third-party libraries live (let's call it <span class="inlinehl">ext</span>).
                 <pre><code class="language-bash">mkdir ext && cd ext
 git clone https://github.com/btwael/SuperString.git</code></pre>
-                <p>Now, you will need to add those lines to your <code>CMakeLists.txt</code></p>
+                <p>Now, you will need to add those lines to your <span class="inlinehl">CMakeLists.txt</span></p>
                 <pre><code class="language-makefile"># include SuperString
 add_subdirectory(ext/SuperString)
 
@@ -47,6 +47,76 @@ include_directories(ext/SuperString/include)
 
 # link your executable against SuperString 
 target_link_libraries(myexecutable SuperString)</code></pre>
+
+                <h2 class="content-subhead2">Without CMake</h2>
+                <p>The header file that contains SuperString declarations is <span class="inlinehl">SuperString/include/SuperString.hh</span>, the source file that contains the definitions <span class="inlinehl">SuperString/src/SuperString.cc</span>, use them as you prefer.</p>
+
+                <!-- API -->
+                <h1 class="content-subhead">API</h1>
+                <!-- API -> Construct a new string -->
+                <h2 class="content-subhead2">Construct a new string</h2>
+                <p>As mentioned above, SuperString is automatically garbage collected, so you don't have to think about how and when to free a SuperString instance. To allow this, there're are two way to create a SuperString using static method <span class="inlinehl">SuperString::Const</span> or <span class="inlinehl">SuperString::Copy</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+SuperString myFunc() {
+    char chars[] = "I'm using SuperString!";
+    SuperString string = SuperString::Copy(chars);
+    return string
+}
+
+char seq[] = "SuperString is cool!";
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = myFunc();
+    SuperString s2 = SuperString::Const(seq);
+    // equivalent to SuperString::Const("SuperString is cool!");
+    std::cout << s1 + s2;
+    return 0;
+}</code></pre>
+                <p>In <span class="inlinehl">myFunc</span>, we used <span class="inlinehl">SuperString::Copy</span> because the sequence that we're building our string from, has a limited lifetime and well be deleted once the function returns, that why we use <span class="inlinehl">::Copy</span> to tell SuperString that we should copy the data and keep them for further use.</p>
+                <p>In the other hand, we used <span class="inlinehl">::Const</span> in <span class="inlinehl">main</span> because the sequence will live as long as the executable lives, that's important because SuperString will not copy the sequence to avoid memory redundancy.</p>
+
+                <!-- API -> static methods -->
+                <h2 class="content-subhead2">Static methods</h2>
+                <!-- API -> static -> SuperString::Const -->
+                <h3 class="content-subhead3">SuperString::Const</h3>
+                <!-- API -> static SuperString::Copy -->
+                <h3 class="content-subhead3">SuperString::Copy</h3>
+
+                <!-- API ->  methods -->
+                <h2 class="content-subhead2">Static methods</h2>
+                <!-- API -> methods -> codeUnitAt() -->
+                <h3 class="content-subhead3">codeUnitAt(index)</h3>
+                <!-- API -> methods -> indexOf() -->
+                <h3 class="content-subhead3">indexOf(pattern)</h3>
+                <!-- API -> methods -> isEmpty() -->
+                <h3 class="content-subhead3">isEmpty()</h3>
+                <!-- API -> methods -> isNotEmpty() -->
+                <h3 class="content-subhead3">isNotEmpty()</h3>
+                <!-- API -> methods -> codeUnitAt() -->
+                <h3 class="content-subhead3">lastIndexOf(pattern)</h3>
+                <!-- API -> methods -> length() -->
+                <h3 class="content-subhead3">length()</h3>
+                <!-- API -> methods -> print() -->
+                <h3 class="content-subhead3">print(stream)</h3>
+                <!-- API -> methods -> print() -->
+                <h3 class="content-subhead3">print(stream, startIndex, endIndex)</h3>
+                <!-- API -> methods -> codeUnitAt() -->
+                <h3 class="content-subhead3">substring(startIndex, endIndex)</h3>
+                <!-- API -> methods -> trim() -->
+                <h3 class="content-subhead3">trim()</h3>
+                <!-- API -> methods -> trimLeft() -->
+                <h3 class="content-subhead3">trimLeft()</h3>
+                <!-- API -> methods -> trimRight() -->
+                <h3 class="content-subhead3">trimRight()</h3>
+
+                <!-- API ->  operators -->
+                <h2 class="content-subhead2">Operators</h2>
+                <!-- API -> operators -> * -->
+                <h3 class="content-subhead3">operator *</h3>
+                <!-- API -> operators -> + -->
+                <h3 class="content-subhead3">operator +</h3>
             </div>
         </div>
 

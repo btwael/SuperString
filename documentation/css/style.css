@@ -53,3 +53,16 @@ a:visited {
     font-weight: 200;
     color: #888;
 }
+
+.content-subhead3 {
+    margin: 20px 0px 5px;
+    font-weight: 100;
+    color: #888;
+}
+
+.inlinehl {
+    display: inline-block;
+    background-color: rgb(246, 242, 240);
+    padding-left: 8px;
+    padding-right: 8px;
+}
