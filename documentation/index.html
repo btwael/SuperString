@@ -253,7 +253,7 @@ int main(int argc, char const *argv[]) {
 #include "SuperString.hh"
 
 int main(int argc, char const *argv[]) {
-    SuperString::Result<int, SuperString::Error> res;
+    SuperString::Result&lt;int, SuperString::Error> res;
     SuperString s = SuperString::Const("SuperString is fast and fast!");
 
     res = s.lastIndexOf(SuperString::Const("fast"));
@@ -298,6 +298,15 @@ int main(int argc, char const *argv[]) {
                     <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream) <span class="modifier">const</span>;
                 </div>
                 <p>Prints this string to the given stream.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    s.print(std::cout); // equivalent to: std::cout << s;
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> print() -->
                 <h3 class="content-subhead3">print(stream, startIndex, endIndex)</h3>
@@ -305,6 +314,15 @@ int main(int argc, char const *argv[]) {
                     <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> startIndex, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> endIndex) <span class="modifier">const</span>;
                 </div>
                 <p>Prints a substring of this string that starts at startIndex, inclusive and end at endIndex, exclusive.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    s.print(std::cout, 0, 11); // Will print: SuperString 
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3">substring(startIndex, endIndex)</h3>
@@ -312,6 +330,22 @@ int main(int argc, char const *argv[]) {
                     <a class="keyword" href="#c-api-types-size">void</a> <span class="token">substring</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> startIndex, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> endIndex) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the substring of this string that extends from startIndex, inclusive, to endIndex, exclusive.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result&lt;SuperString, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    res = s.substring(0, 11);
+
+    if(res.isOk()) {
+        std::cout << res.ok() << "\n"; // Will print: SuperString
+    } else {
+        std::cout << "Range error" << "\n";
+    }
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> trim() -->
                 <h3 class="content-subhead3">trim()</h3>
@@ -319,6 +353,16 @@ int main(int argc, char const *argv[]) {
                     SuperString <span class="token">trim</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns the string without any leading and trailing whitespace.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("  \tSuperString  ");
+
+    std::cout << s.trim(); // Will print "SuperString" not "  \tSuperString  "
+
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> trimLeft() -->
                 <h3 class="content-subhead3">trimLeft()</h3>
@@ -326,6 +370,16 @@ int main(int argc, char const *argv[]) {
                     SuperString <span class="token">trimLeft</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns the string without any leading whitespace.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("  \tSuperString  ");
+
+    std::cout << s.trimLeft(); // Will print "SuperString  " not "  \tSuperString  "
+
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> trimRight() -->
                 <h3 class="content-subhead3">trimRight()</h3>
@@ -333,6 +387,16 @@ int main(int argc, char const *argv[]) {
                     SuperString <span class="token">trimRight</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns the string without any trailing whitespace.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("  \tSuperString  ");
+
+    std::cout << s.trimRight(); // Will print "  \tSuperString" not "  \tSuperString  "
+
+    return 0;
+}</code></pre>
 
                 <!-- API ->  operators -->
                 <h2 class="content-subhead2">Operators</h2>
@@ -342,6 +406,18 @@ int main(int argc, char const *argv[]) {
                     SuperString <span class="token">operator*</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> times) <span class="modifier">const</span>;
                 </div>
                 <p>Creates a new string that concatenate this string with itself a number of times.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s = SuperString::Const("bla");
+    s = s * 3;
+
+    std::cout << s << "\n"; // blablabla
+    std::cout << s.substring(2, 7).ok() << "\n"; // ablab
+
+    return 0;
+}</code></pre>
 
                 <!-- API -> operators -> + -->
                 <h3 class="content-subhead3">operator +</h3>
@@ -349,6 +425,19 @@ int main(int argc, char const *argv[]) {
                     SuperString <span class="token">operator+</span>(<span class="modifier">const</span> SuperString &amp;other) <span class="modifier">const</span>;
                 </div>
                 <p>Creates a new string by concatenating this string with other.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = SuperString::Const("bla");
+    SuperString s2 = SuperString::Const("kla");
+    SuperString s = s1 + s2 + s1;
+
+    std::cout << s << "\n"; // blaklabla
+    std::cout << s.substring(2, 9).ok() << "\n"; // aklabla
+
+    return 0;
+}</code></pre>
 
                 <!-- API ->  nested types -->
                 <h2 class="content-subhead2" id="c-api-types">Nested types</h2>
