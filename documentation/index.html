@@ -62,7 +62,7 @@ target_link_libraries(myexecutable SuperString)</code></pre>
 SuperString myFunc() {
     char chars[] = "I'm using SuperString!";
     SuperString string = SuperString::Copy(chars);
-    return string
+    return string;
 }
 
 char seq[] = "SuperString is cool!";
@@ -71,7 +71,7 @@ int main(int argc, char const *argv[]) {
     SuperString s1 = myFunc();
     SuperString s2 = SuperString::Const(seq);
     // equivalent to SuperString::Const("SuperString is cool!");
-    std::cout << s1 + s2;
+    std::cout << s1 << "\n" << s2;
     return 0;
 }</code></pre>
                 <p>In <span class="inlinehl">myFunc</span>, we used <span class="inlinehl">SuperString::Copy</span> because the sequence that we're building our string from, has a limited lifetime and well be deleted once the function returns, that why we use <span class="inlinehl">::Copy</span> to tell SuperString that we should copy the data and keep them for further use.</p>
@@ -88,6 +88,25 @@ int main(int argc, char const *argv[]) {
                     <span class="modifier">static</span> SuperString SuperString::<span class="token">Const</span>(<span class="modifier">const</span> SuperString::<a class="keyword" href="#c-api-types-byte">Byte</a> *bytes, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
                 </div>
                 <p>This static method creates a new SuperString from a const sequence of characters of a given <a href="#c-api-types-encoding">supported encoding</a>, the encoding paramter has <span class="inlinehl">SuperString::Encoding::UTF8</span> as default value. This method does not replicate string data in memory</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+char asciiseq[] = "SuperString is cool!";
+SuperString::Byte utf8seq[] = {0xe2, 0x82, 0xac, 0x00};
+SuperString::Byte utf16beseq[] = {0x00, 0x24, 0x00, 0x00};
+int utf32seq[] = {0x10437, 0x0000};
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = SuperString::Const(asciiseq, SuperString::Encoding::ASCII);
+    SuperString s2 = SuperString::Const(utf8seq, SuperString::Encoding::UTF8);
+    SuperString s3 = SuperString::Const(utf16beseq, SuperString::Encoding::UTF16BE);
+    SuperString s4 = SuperString::Const(utf32seq, SuperString::Encoding::UTF32);
+    std::cout << s1 << "\n"; // SuperString is cool!
+    std::cout << s2 << "\n"; // €
+    std::cout << s3 << "\n"; // $
+    std::cout << s4 << "\n"; // 𐐷
+    return 0;
+}</code></pre>
 
                 <!-- API -> static SuperString::Copy -->
                 <h3 class="content-subhead3">SuperString::Copy</h3>
@@ -98,7 +117,35 @@ int main(int argc, char const *argv[]) {
                     <span class="modifier">static</span> SuperString SuperString::<span class="token">Copy</span>(<span class="modifier">const</span> SuperString::<a class="keyword" href="#c-api-types-byte">Byte</a> *bytes, SuperString::<a class="keyword" href="#c-api-types-encoding">Encoding</a> encoding);
                 </div>
                 <p>This static method creates a new SuperString from a const sequence of characters of a given <a href="#c-api-types-encoding">supported encoding</a>, the encoding paramter has <span class="inlinehl">SuperString::Encoding::UTF8</span> as default value. This method copys the given sequence to a new allocated memory space.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
 
+SuperString getString(int i) {
+    char asciiseq[] = "SuperString is cool!";
+    SuperString::Byte utf8seq[] = {0xe2, 0x82, 0xac, 0x00};
+    SuperString::Byte utf16beseq[] = {0x00, 0x24, 0x00, 0x00};
+    int utf32seq[] = {0x10437, 0x0000};
+    switch(i) {
+        case 0:
+            return SuperString::Copy(asciiseq, SuperString::Encoding::ASCII);
+        case 1:
+            return SuperString::Copy(utf8seq, SuperString::Encoding::UTF8);
+        case 2:
+            return SuperString::Copy(utf16beseq, SuperString::Encoding::UTF16BE);
+        case 3:
+            return SuperString::Copy(utf32seq, SuperString::Encoding::UTF32);
+        default:
+            return SuperString::Copy("Nothing"); // by default this is UTF8
+    }
+}
+
+int main(int argc, char const *argv[]) {
+    std::cout << getString(0) << "\n"; // SuperString is cool!
+    std::cout << getString(1) << "\n"; // €
+    std::cout << getString(2) << "\n"; // $
+    std::cout << getString(3) << "\n"; // 𐐷
+    return 0;
+}</code></pre>
 
                 <!-- API ->  methods -->
                 <h2 class="content-subhead2">Methods</h2>
@@ -108,13 +155,53 @@ int main(int argc, char const *argv[]) {
                     SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;<a class="keyword">int</a>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">codeUnitAt</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> index) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the code unit at the given index, if index is less than the length of the string, if not, it returns <span class="inlinehl">SuperString::Error::RangeError</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result<int, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast!");
+
+    res = s.codeUnitAt(1);
+
+    if(res.isOk()) {
+        std::cout << "Valid index, code unit: " << res.ok() << "\n";
+    }
+
+    res = s.codeUnitAt(100);
+
+    if(res.isErr()) { // &amp;&amp; res.err() == SuperString::Error::RangeError
+        std::cout << "Range error\n";
+    }
+
+    for(SuperString::Size i = 0; i < s.length(); i++) {
+        std::cout << s.codeUnitAt(i).ok() << "\n"; // sometime it's just safe
+    }
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> indexOf() -->
                 <h3 class="content-subhead3">indexOf(pattern)</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;SuperString, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">indexOf</span>(SuperString other) <span class="modifier">const</span>;
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;int, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">indexOf</span>(SuperString other) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the position of the first occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result<int, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    res = s.indexOf(SuperString::Const("fast"));
+
+    if(res.isOk()) {
+        std::cout << res.ok() << "\n"; // 15
+    } else {
+        std::cout << "Not found" << "\n";
+    }
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> isEmpty() -->
                 <h3 class="content-subhead3">isEmpty()</h3>
@@ -122,6 +209,19 @@ int main(int argc, char const *argv[]) {
                     SuperString::<a class="keyword" href="#c-api-types-bool">Bool</a> <span class="token">isEmpty</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns true if this string is empty.</p>
+                <pre><code class="language-cpp">#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s1;
+    SuperString s2 = SuperString::Const("");
+    SuperString s3 = SuperString::Const("SuperString");
+
+    s1.isEmpty(); // SuperString::TRUE
+    s2.isEmpty(); // SuperString::TRUE
+    s3.isEmpty(); // SuperString::FALSE
+
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> isNotEmpty() -->
                 <h3 class="content-subhead3">isNotEmpty()</h3>
@@ -129,13 +229,42 @@ int main(int argc, char const *argv[]) {
                     SuperString::<a class="keyword" href="#c-api-types-bool">Bool</a> <span class="token">isNotEmpty</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns true if this string is not empty.</p>
+                <pre><code class="language-cpp">#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString s1;
+    SuperString s2 = SuperString::Const("");
+    SuperString s3 = SuperString::Const("SuperString");
+
+    s1.isNotEmpty(); // SuperString::FALSE
+    s2.isNotEmpty(); // SuperString::FALSE
+    s3.isNotEmpty(); // SuperString::TRUE
+
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3">lastIndexOf(pattern)</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;SuperString, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">lastIndexOf</span>(SuperString other) <span class="modifier">const</span>;
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;int, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">lastIndexOf</span>(SuperString other) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the position of the last occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+int main(int argc, char const *argv[]) {
+    SuperString::Result<int, SuperString::Error> res;
+    SuperString s = SuperString::Const("SuperString is fast and fast!");
+
+    res = s.lastIndexOf(SuperString::Const("fast"));
+
+    if(res.isOk()) {
+        std::cout << res.ok() << "\n"; // 24
+    } else {
+        std::cout << "Not found" << "\n";
+    }
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> length() -->
                 <h3 class="content-subhead3">length()</h3>
@@ -143,6 +272,25 @@ int main(int argc, char const *argv[]) {
                     SuperString::<a class="keyword" href="#c-api-types-size">Size</a> <span class="token">length</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns the length of this string.</p>
+                <pre><code class="language-cpp">#include &lt;iostream>
+#include "SuperString.hh"
+
+char asciiseq[] = "SuperString is cool!";
+SuperString::Byte utf8seq[] = {0xe2, 0x82, 0xac, 0x00};
+SuperString::Byte utf16beseq[] = {0x00, 0x24, 0x00, 0x00};
+int utf32seq[] = {0x10437, 0x0000};
+
+int main(int argc, char const *argv[]) {
+    SuperString s1 = SuperString::Const(asciiseq, SuperString::Encoding::ASCII);
+    SuperString s2 = SuperString::Const(utf8seq, SuperString::Encoding::UTF8);
+    SuperString s3 = SuperString::Const(utf16beseq, SuperString::Encoding::UTF16BE);
+    SuperString s4 = SuperString::Const(utf32seq, SuperString::Encoding::UTF32);
+    std::cout << s1.length() << "\n"; // 20
+    std::cout << s2.length() << "\n"; // 1
+    std::cout << s3.length() << "\n"; // 1
+    std::cout << s4.length() << "\n"; // 1
+    return 0;
+}</code></pre>
 
                 <!-- API -> methods -> print() -->
                 <h3 class="content-subhead3">print(stream)</h3>
