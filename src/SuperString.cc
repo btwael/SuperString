@@ -173,15 +173,19 @@ SuperString SuperString::Const(const char *chars, SuperString::Encoding encoding
         case Encoding::UTF16BE:
             sequence = new SuperString::ConstUTF16BESequence((Byte *) chars);
             break;
-        default:
+        case Encoding::UTF32:
             sequence = new SuperString::ConstUTF32Sequence((Byte *) chars);
             break;
     }
     return SuperString(sequence);
 }
 
+SuperString SuperString::Const(const int *bytes, SuperString::Encoding encoding) {
+    return SuperString::Const((const char *) bytes, encoding);
+}
+
 SuperString SuperString::Const(const SuperString::Byte *bytes, SuperString::Encoding encoding) {
-    return SuperString::Const((char *) bytes, encoding);
+    return SuperString::Const((const char *) bytes, encoding);
 }
 
 SuperString SuperString::Copy(const char *chars, Encoding encoding) {
@@ -196,15 +200,19 @@ SuperString SuperString::Copy(const char *chars, Encoding encoding) {
         case Encoding::UTF16BE:
             sequence = new SuperString::CopyUTF16BESequence((Byte *) chars);
             break;
-        default:
+        case Encoding::UTF32:
             sequence = new SuperString::CopyUTF32Sequence((Byte *) chars);
             break;
     }
     return SuperString(sequence);
 }
 
+SuperString SuperString::Copy(const int *bytes, SuperString::Encoding encoding) {
+    return SuperString::Copy((const char *) bytes, encoding);
+}
+
 SuperString SuperString::Copy(const SuperString::Byte *bytes, Encoding encoding) {
-    return SuperString::Copy((char *) bytes, encoding);
+    return SuperString::Copy((const char *) bytes, encoding);
 }
 
 //*-- SuperString::StringSequence (abstract|internal)

@@ -74,6 +74,8 @@ public:
     public:
         //*- Constructors
 
+        Result();
+
         Result(T ok);
 
         Result(E err);
@@ -86,6 +88,9 @@ public:
 
         //*- Getters
 
+        /**
+         * Returns the error value.
+         */
         E err() const;
 
         /**
@@ -98,6 +103,9 @@ public:
          */
         SuperString::Bool isOk() const;
 
+        /**
+         * Returns the success value.
+         */
         T ok() const;
 
         //*- Setters
@@ -265,13 +273,17 @@ public:
     static SuperString Const(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
     // TODO: comment
+    static SuperString Const(const int *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF32);
+
+    // TODO: comment
     static SuperString
     Const(const SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
     // TODO: comment
     static SuperString Copy(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
-    // TODO: support from int *
+    // TODO: comment
+    static SuperString Copy(const int *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF32);
 
     // TODO: comment
     static SuperString
@@ -1174,6 +1186,13 @@ std::ostream &operator<<(std::ostream &stream, const SuperString &string);
 /*-- definitions --*/
 
 //*-- SuperString::Result<T, E>
+template<class T, class E>
+SuperString::Result<T, E>::Result()
+        : _ok(NULL),
+          _err(NULL) {
+    // nothing go here
+}
+
 template<class T, class E>
 SuperString::Result<T, E>::Result(T ok)
         : _ok(NULL),
