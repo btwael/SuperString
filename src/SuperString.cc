@@ -1645,6 +1645,8 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, Sup
                 } else {
                     if(endIndex <= iterationEndIndex) {
                         this->_container._multiple._sequence->print(stream, 0, endIndex - iterationStartIndex);
+                    } else {
+                        this->_container._multiple._sequence->print(stream);
                     }
                 }
             }
@@ -1672,6 +1674,8 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, Sup
                     if(endIndex <= iterationEndIndex) {
                         SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data,
                                                   0, endIndex - iterationStartIndex);
+                    } else {
+                        SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data);
                     }
                 }
             }
