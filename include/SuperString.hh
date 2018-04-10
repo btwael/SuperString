@@ -448,8 +448,11 @@ private:
         // TODO: comment
         void reconstructReferencers();
 
-    private:
+    protected:
+        virtual void doDelete() const = 0;
+        virtual SuperString::Bool isToBeDeleted() const = 0;
 
+    private:
         SuperString::Bool _substringMatches(SuperString::Size startIndex, SuperString other) const;
 
         friend class SuperString;
@@ -497,6 +500,10 @@ private:
 
         // TODO: comment
         virtual void reconstruct(const StringSequence *sequence) const = 0;
+
+    protected:
+        virtual void doDelete() const = 0;
+        virtual SuperString::Bool isToBeDeleted() const = 0;
     };
 
     //*-- ConstASCIISequence (internal)
@@ -546,6 +553,10 @@ private:
         // inherited: SuperString::Size freeingCost() const;
 
         friend class CopyASCIISequence;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- CopyASCIISequence (internal)
@@ -594,6 +605,10 @@ private:
         SuperString::Size keepingCost() const /*override*/;
 
         // inherited: SuperString::Size freeingCost() const;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*--ConstUTF8Sequence (internal)
@@ -643,6 +658,10 @@ private:
         // inherited:SuperString:: Size freeingCost() const;
 
         friend class CopyUTF8Sequence;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- CopyUTF8Sequence (internal)
@@ -692,6 +711,10 @@ private:
         SuperString::Size keepingCost() const /*override*/;
 
         // inherited: SuperString::Size freeingCost() const;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- ConstUTF16BESequence (internal)
@@ -741,6 +764,10 @@ private:
         // inherited:SuperString:: Size freeingCost() const;
 
         friend class CopyUTF16BESequence;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- CopyUTF16BESequence (internal)
@@ -790,6 +817,10 @@ private:
         SuperString::Size keepingCost() const /*override*/;
 
         // inherited: SuperString::Size freeingCost() const;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- ConstUTF32Sequence (internal)
@@ -839,6 +870,10 @@ private:
         // inherited: SuperString::Size freeingCost() const;
 
         friend class CopyUTF32Sequence;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- CopyUTF32Sequence (internal)
@@ -887,12 +922,16 @@ private:
         SuperString::Size keepingCost() const /*override*/;
 
         // inherited: SuperString::Size freeingCost() const;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- SubstringSequence (internal)
     class SubstringSequence: public ReferenceStringSequence {
     private:
-        enum class Kind {
+        enum class Kind: char {
             SUBSTRING,
             RECONSTRUCTED
         };
@@ -923,6 +962,8 @@ private:
 
         //*- Getters
 
+        SuperString::SubstringSequence::Kind kind() const;
+
         SuperString::Size length() const /*override*/;
 
         //*- Methods
@@ -952,6 +993,10 @@ private:
         void reconstruct(const StringSequence *sequence) const /*override*/;
 
         friend class StringSequence;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- ConcatenationSequence (internal)
@@ -1001,6 +1046,8 @@ private:
 
         //*- Getters
 
+        SuperString::ConcatenationSequence::Kind kind() const;
+
         SuperString::Size length() const /*override*/;
 
         //*- Methods
@@ -1028,6 +1075,10 @@ private:
         SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     //*-- MultipleSequence (internal)
@@ -1064,6 +1115,8 @@ private:
 
         //*- Getters
 
+        SuperString::MultipleSequence::Kind kind() const;
+
         SuperString::Size length() const /*override*/;
 
         //*- Methods
@@ -1091,6 +1144,10 @@ private:
         SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
+
+    protected:
+        void doDelete() const;
+        SuperString::Bool isToBeDeleted() const;
     };
 
     inline static SuperString::Bool isWhiteSpace(int codeUnit);

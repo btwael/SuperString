@@ -24,7 +24,7 @@ SuperString::SuperString(SuperString::StringSequence *sequence)
 
 SuperString::~SuperString() {
     if(this->_sequence != NULL && this->_sequence->refRelease() == 0 && this->freeingCost() < this->keepingCost()) {
-        delete this->_sequence;
+        this->_sequence->doDelete();
     }
 }
 
@@ -149,7 +149,7 @@ SuperString SuperString::operator*(Size times) const {
 SuperString &SuperString::operator=(const SuperString &other) {
     if(this != &other) {
         if(this->_sequence->refRelease() == 0) {
-            delete this->_sequence;
+            this->_sequence->doDelete();
         }
         this->_sequence = other._sequence;
         this->_sequence->refAdd();
@@ -388,6 +388,18 @@ SuperString::Size SuperString::ConstASCIISequence::keepingCost() const {
     return sizeof(ConstASCIISequence);
 }
 
+void SuperString::ConstASCIISequence::doDelete() const {
+    ConstASCIISequence *self = ((ConstASCIISequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::ConstASCIISequence::isToBeDeleted() const {
+    return this->_lengthComputed == ((Bool) 2);
+}
+
 //*-- SuperString::CopyASCIISequence (internal)
 SuperString::CopyASCIISequence::CopyASCIISequence(const SuperString::Byte *bytes) {
     this->_length = SuperString::ASCII::length(bytes);
@@ -466,6 +478,18 @@ SuperString::Size SuperString::CopyASCIISequence::keepingCost() const {
         cost += this->length() + 1;
     }
     return cost;
+}
+
+void SuperString::CopyASCIISequence::doDelete() const {
+    CopyASCIISequence *self = ((CopyASCIISequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_length = 0; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::CopyASCIISequence::isToBeDeleted() const {
+    return this->_length == 0;
 }
 
 //*-- SuperString::ConstUTF8Sequence (internal)
@@ -556,6 +580,18 @@ SuperString SuperString::ConstUTF8Sequence::trimRight() const {
 
 SuperString::Size SuperString::ConstUTF8Sequence::keepingCost() const {
     return sizeof(ConstUTF8Sequence);
+}
+
+void SuperString::ConstUTF8Sequence::doDelete() const {
+    ConstUTF8Sequence *self = ((ConstUTF8Sequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::ConstUTF8Sequence::isToBeDeleted() const {
+    return this->_lengthComputed == ((Bool) 2);
 }
 
 //*-- SuperString::CopyUTF8Sequence (internal)
@@ -660,6 +696,18 @@ SuperString::Size SuperString::CopyUTF8Sequence::keepingCost() const {
     return cost;
 }
 
+void SuperString::CopyUTF8Sequence::doDelete() const {
+    CopyUTF8Sequence *self = ((CopyUTF8Sequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_length = 0; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::CopyUTF8Sequence::isToBeDeleted() const {
+    return this->_length == 0;
+}
+
 //*-- ConstUTF16BESequence (internal)
 SuperString::ConstUTF16BESequence::ConstUTF16BESequence(const SuperString::Byte *bytes)
         : _bytes(bytes),
@@ -751,6 +799,18 @@ SuperString SuperString::ConstUTF16BESequence::trimRight() const {
 
 SuperString::Size SuperString::ConstUTF16BESequence::keepingCost() const {
     return sizeof(ConstUTF16BESequence);
+}
+
+void SuperString::ConstUTF16BESequence::doDelete() const {
+    ConstUTF16BESequence *self = ((ConstUTF16BESequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::ConstUTF16BESequence::isToBeDeleted() const {
+    return this->_lengthComputed == ((Bool) 2);
 }
 
 //*-- SuperString::CopyUTF16BESequence (internal)
@@ -856,6 +916,18 @@ SuperString::Size SuperString::CopyUTF16BESequence::keepingCost() const {
     return cost;
 }
 
+void SuperString::CopyUTF16BESequence::doDelete() const {
+    CopyUTF16BESequence *self = ((CopyUTF16BESequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_length = 0; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::CopyUTF16BESequence::isToBeDeleted() const {
+    return this->_length == 0;
+}
+
 //*-- SuperString::ConstUTF32Sequence (internal)
 SuperString::ConstUTF32Sequence::ConstUTF32Sequence(const SuperString::Byte *bytes)
         : _bytes(((const int *) bytes)),
@@ -924,6 +996,18 @@ SuperString SuperString::ConstUTF32Sequence::trimRight() const {
 
 SuperString::Size SuperString::ConstUTF32Sequence::keepingCost() const {
     return sizeof(ConstUTF32Sequence);
+}
+
+void SuperString::ConstUTF32Sequence::doDelete() const {
+    ConstUTF32Sequence *self = ((ConstUTF32Sequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::ConstUTF32Sequence::isToBeDeleted() const {
+    return this->_lengthComputed == ((Bool) 2);
 }
 
 //*-- SuperString::CopyUTF32Sequence (internal)
@@ -1006,6 +1090,18 @@ SuperString::Size SuperString::CopyUTF32Sequence::keepingCost() const {
     return cost;
 }
 
+void SuperString::CopyUTF32Sequence::doDelete() const {
+    CopyUTF32Sequence *self = ((CopyUTF32Sequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_length = 0; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::CopyUTF32Sequence::isToBeDeleted() const {
+    return this->_length == 0;
+}
+
 //*-- SuperString::SubstringSequence (internal)
 SuperString::SubstringSequence::SubstringSequence(const StringSequence *sequence, SuperString::Size startIndex,
                                                   SuperString::Size endIndex) {
@@ -1017,13 +1113,13 @@ SuperString::SubstringSequence::SubstringSequence(const StringSequence *sequence
 }
 
 SuperString::SubstringSequence::~SubstringSequence() {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::SUBSTRING:
             this->_container._substring._sequence->removeReferencer(this);
             if(this->_container._substring._sequence->refCount() == 0 &&
                this->_container._substring._sequence->freeingCost() <
                this->_container._substring._sequence->keepingCost()) {
-                delete this->_container._substring._sequence;
+                this->_container._substring._sequence->doDelete();
             }
             break;
         case Kind::RECONSTRUCTED:
@@ -1032,8 +1128,12 @@ SuperString::SubstringSequence::~SubstringSequence() {
     }
 }
 
+SuperString::SubstringSequence::Kind SuperString::SubstringSequence::kind() const {
+    return (Kind) (((char) this->_kind) & 0b01111111);
+}
+
 SuperString::Size SuperString::SubstringSequence::length() const /*override*/ {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::SUBSTRING:
             return this->_container._substring._endIndex - this->_container._substring._startIndex;
         case Kind::RECONSTRUCTED:
@@ -1044,7 +1144,7 @@ SuperString::Size SuperString::SubstringSequence::length() const /*override*/ {
 SuperString::Result<int, SuperString::Error> SuperString::SubstringSequence::codeUnitAt(
         SuperString::Size index) const {
     if(index < this->length()) {
-        switch(this->_kind) {
+        switch(this->kind()) {
             case Kind::SUBSTRING:
                 return this->_container._substring._sequence->codeUnitAt(
                         this->_container._substring._startIndex + index);
@@ -1057,7 +1157,7 @@ SuperString::Result<int, SuperString::Error> SuperString::SubstringSequence::cod
 
 SuperString::Result<SuperString, SuperString::Error>
 SuperString::SubstringSequence::substring(SuperString::Size startIndex, SuperString::Size endIndex) const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::SUBSTRING:
             if((this->_container._substring._sequence->length() <
                 (this->_container._substring._startIndex + startIndex)) ||
@@ -1083,7 +1183,7 @@ SuperString::SubstringSequence::substring(SuperString::Size startIndex, SuperStr
 }
 
 SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream) const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::SUBSTRING:
             return this->_container._substring._sequence->print(stream, this->_container._substring._startIndex,
                                                                 this->_container._substring._endIndex);
@@ -1095,7 +1195,7 @@ SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream) co
 
 SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                         SuperString::Size endIndex) const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::SUBSTRING:
             return this->_container._substring._sequence->print(stream,
                                                                 this->_container._substring._startIndex + startIndex,
@@ -1142,7 +1242,7 @@ SuperString SuperString::SubstringSequence::trimRight() const {
 }
 
 SuperString::Size SuperString::SubstringSequence::keepingCost() const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::SUBSTRING:
             return sizeof(SubstringSequence) + this->_container._substring._sequence->keepingCost();
         case Kind::RECONSTRUCTED:
@@ -1151,7 +1251,7 @@ SuperString::Size SuperString::SubstringSequence::keepingCost() const {
 }
 
 SuperString::Size SuperString::SubstringSequence::reconstructionCost(const StringSequence *sequence) const {
-    if(this->_kind == Kind::SUBSTRING) {
+    if(this->kind() == Kind::SUBSTRING) {
         return sizeof(SubstringSequence) +
                (this->_container._substring._endIndex - this->_container._substring._startIndex) * sizeof(int);
     }
@@ -1160,7 +1260,7 @@ SuperString::Size SuperString::SubstringSequence::reconstructionCost(const Strin
 
 void SuperString::SubstringSequence::reconstruct(const StringSequence *sequence) const {
     SubstringSequence *self = ((SubstringSequence *) ((Size) this));
-    if(self->_kind == Kind::SUBSTRING) {
+    if(self->kind() == Kind::SUBSTRING) {
         struct SubstringMetaInfo old = self->_container._substring;
         struct ReconstructedMetaInfo nw;
         nw._length = old._endIndex - old._startIndex;
@@ -1170,11 +1270,23 @@ void SuperString::SubstringSequence::reconstruct(const StringSequence *sequence)
         }
         old._sequence->removeReferencer(self);
         if(old._sequence->refCount() == 0 && old._sequence->freeingCost() < old._sequence->keepingCost()) {
-            delete old._sequence;
+            old._sequence->doDelete();
         }
         self->_kind = Kind::RECONSTRUCTED;
         self->_container._reconstructed = nw;
     }
+}
+
+void SuperString::SubstringSequence::doDelete() const {
+    SubstringSequence *self = ((SubstringSequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_kind = (Kind) (((char) self->kind()) + 0b10000000); // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::SubstringSequence::isToBeDeleted() const {
+    return (((char) this->_kind) & 0b10000000) == 0b10000000;
 }
 
 //*-- SuperString::ConcatenationSequence (internal)
@@ -1189,19 +1301,19 @@ SuperString::ConcatenationSequence::ConcatenationSequence(const StringSequence *
 
 SuperString::ConcatenationSequence::~ConcatenationSequence() {
     this->reconstructReferencers();
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::CONCATENATION:
             this->_container._concatenation._left->removeReferencer(this);
             if(this->_container._concatenation._left->refCount() == 0 &&
                this->_container._concatenation._left->freeingCost() <
                this->_container._concatenation._left->keepingCost()) {
-                delete this->_container._concatenation._left;
+                this->_container._concatenation._left->doDelete();
             }
             this->_container._concatenation._right->removeReferencer(this);
             if(this->_container._concatenation._right->refCount() == 0 &&
                this->_container._concatenation._right->freeingCost() <
                this->_container._concatenation._right->keepingCost()) {
-                delete this->_container._concatenation._right;
+                this->_container._concatenation._right->doDelete();
             }
             break;
         case Kind::LEFTRECONSTRUCTED:
@@ -1210,7 +1322,7 @@ SuperString::ConcatenationSequence::~ConcatenationSequence() {
             if(this->_container._leftReconstructed._right->refCount() == 0 &&
                this->_container._leftReconstructed._right->freeingCost() <
                this->_container._leftReconstructed._right->keepingCost()) {
-                delete this->_container._concatenation._right;
+                this->_container._leftReconstructed._right->doDelete();
             }
             break;
         case Kind::RIGHTRECONSTRUCTED:
@@ -1219,7 +1331,7 @@ SuperString::ConcatenationSequence::~ConcatenationSequence() {
             if(this->_container._rightReconstructed._left->refCount() == 0 &&
                this->_container._rightReconstructed._left->freeingCost() <
                this->_container._rightReconstructed._left->keepingCost()) {
-                delete this->_container._rightReconstructed._left;
+                this->_container._rightReconstructed._left->doDelete();
             }
             break;
         case Kind::RECONSTRUCTED:
@@ -1227,8 +1339,12 @@ SuperString::ConcatenationSequence::~ConcatenationSequence() {
     }
 }
 
+SuperString::ConcatenationSequence::Kind SuperString::ConcatenationSequence::kind() const {
+    return (Kind) (((char) this->_kind) & 0b01111111);
+}
+
 SuperString::Size SuperString::ConcatenationSequence::length() const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::CONCATENATION:
             return this->_container._concatenation._left->length() + this->_container._concatenation._right->length();
         case Kind::LEFTRECONSTRUCTED:
@@ -1244,7 +1360,7 @@ SuperString::Size SuperString::ConcatenationSequence::length() const {
 
 SuperString::Result<int, SuperString::Error>
 SuperString::ConcatenationSequence::codeUnitAt(SuperString::Size index) const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::CONCATENATION:
             if(index < this->_container._concatenation._left->length()) {
                 return Result<int, Error>(this->_container._concatenation._left->codeUnitAt(index));
@@ -1294,7 +1410,7 @@ SuperString::ConcatenationSequence::substring(SuperString::Size startIndex,
 
 SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream) const {
     Bool isOk = TRUE;
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::CONCATENATION:
             isOk &= this->_container._concatenation._left->print(stream);
             isOk &= this->_container._concatenation._right->print(stream);
@@ -1317,7 +1433,7 @@ SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream
 SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                             SuperString::Size endIndex) const {
     Bool isOk = TRUE;
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::CONCATENATION:
             if(startIndex < this->_container._concatenation._left->length()) {
                 if(endIndex < this->_container._concatenation._left->length()) {
@@ -1423,7 +1539,7 @@ SuperString SuperString::ConcatenationSequence::trimRight() const {
 }
 
 SuperString::Size SuperString::ConcatenationSequence::keepingCost() const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::CONCATENATION:
             return sizeof(ConcatenationSequence) + this->_container._concatenation._left->keepingCost() +
                    this->_container._concatenation._right->keepingCost();
@@ -1439,7 +1555,7 @@ SuperString::Size SuperString::ConcatenationSequence::keepingCost() const {
 }
 
 SuperString::Size SuperString::ConcatenationSequence::reconstructionCost(const StringSequence *sequence) const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::CONCATENATION:
             if(sequence == this->_container._concatenation._left) {
                 return sizeof(ConcatenationSequence) +
@@ -1470,7 +1586,7 @@ SuperString::Size SuperString::ConcatenationSequence::reconstructionCost(const S
 
 void SuperString::ConcatenationSequence::reconstruct(const StringSequence *sequence) const {
     ConcatenationSequence *self = ((ConcatenationSequence *) ((Size) this));
-    if(self->_kind == Kind::CONCATENATION) {
+    if(self->kind() == Kind::CONCATENATION) {
         struct ConcatenationMetaInfo old = self->_container._concatenation;
         if(old._left == sequence) {
             struct LeftReconstructedMetaInfo nw;
@@ -1482,7 +1598,7 @@ void SuperString::ConcatenationSequence::reconstruct(const StringSequence *seque
             }
             old._left->removeReferencer(self);
             if(old._left->refCount() == 0 && old._left->freeingCost() < old._left->keepingCost()) {
-                delete old._left;
+                old._left->doDelete();
             }
             self->_kind = Kind::LEFTRECONSTRUCTED;
             self->_container._leftReconstructed = nw;
@@ -1496,12 +1612,12 @@ void SuperString::ConcatenationSequence::reconstruct(const StringSequence *seque
             }
             old._right->removeReferencer(self);
             if(old._right->refCount() == 0 && old._right->freeingCost() < old._right->keepingCost()) {
-                delete old._right;
+                old._right->doDelete();
             }
             self->_kind = Kind::RIGHTRECONSTRUCTED;
             self->_container._rightReconstructed = nw;
         }
-    } else if(self->_kind == Kind::LEFTRECONSTRUCTED) {
+    } else if(self->kind() == Kind::LEFTRECONSTRUCTED) {
         struct LeftReconstructedMetaInfo old = self->_container._leftReconstructed;
         if(old._right == sequence) {
             struct ReconstructedMetaInfo nw;
@@ -1516,12 +1632,12 @@ void SuperString::ConcatenationSequence::reconstruct(const StringSequence *seque
             }
             old._right->removeReferencer(self);
             if(old._right->refCount() == 0 && old._right->freeingCost() < old._right->keepingCost()) {
-                delete old._right;
+                old._right->doDelete();
             }
             self->_kind = Kind::RECONSTRUCTED;
             self->_container._reconstructed = nw;
         }
-    } else if(self->_kind == Kind::RIGHTRECONSTRUCTED) {
+    } else if(self->kind() == Kind::RIGHTRECONSTRUCTED) {
         struct RightReconstructedMetaInfo old = self->_container._rightReconstructed;
         if(old._left == sequence) {
             struct ReconstructedMetaInfo nw;
@@ -1537,12 +1653,24 @@ void SuperString::ConcatenationSequence::reconstruct(const StringSequence *seque
             }
             old._left->removeReferencer(self);
             if(old._left->refCount() == 0 && old._left->freeingCost() < old._left->keepingCost()) {
-                delete old._left;
+                old._left->doDelete();
             }
             self->_kind = Kind::RECONSTRUCTED;
             self->_container._reconstructed = nw;
         }
     }
+}
+
+void SuperString::ConcatenationSequence::doDelete() const {
+    ConcatenationSequence *self = ((ConcatenationSequence *) (Size) this);
+    if(this->isToBeDeleted() == FALSE) {
+        *((char *) &self->_kind) = ((char) self->kind()) + 0b10000000; // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::ConcatenationSequence::isToBeDeleted() const {
+    return (((char) this->_kind) & 0b10000000) == 0b10000000;
 }
 
 //*-- MultipleSequence (internal)
@@ -1555,13 +1683,13 @@ SuperString::MultipleSequence::MultipleSequence(const StringSequence *sequence, 
 
 SuperString::MultipleSequence::~MultipleSequence() {
     this->reconstructReferencers();
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::MULTIPLE:
             this->_container._multiple._sequence->removeReferencer(this);
             if(this->_container._multiple._sequence->refCount() == 0 &&
                this->_container._multiple._sequence->freeingCost() <
                this->_container._multiple._sequence->keepingCost()) {
-                delete this->_container._multiple._sequence;
+                this->_container._multiple._sequence->doDelete();
             }
             break;
         case Kind::RECONSTRUCTED:
@@ -1570,8 +1698,12 @@ SuperString::MultipleSequence::~MultipleSequence() {
     }
 }
 
+SuperString::MultipleSequence::Kind SuperString::MultipleSequence::kind() const {
+    return (Kind) (((char) this->_kind) & 0b01111111);
+}
+
 SuperString::Size SuperString::MultipleSequence::length() const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::MULTIPLE:
             return this->_container._multiple._sequence->length() * this->_container._multiple._time;
         case Kind::RECONSTRUCTED:
@@ -1582,7 +1714,7 @@ SuperString::Size SuperString::MultipleSequence::length() const {
 SuperString::Result<int, SuperString::Error> SuperString::MultipleSequence::codeUnitAt(SuperString::Size index) const {
     Size length = this->length();
     if(index < length) {
-        switch(this->_kind) {
+        switch(this->kind()) {
             case Kind::MULTIPLE:
                 return this->_container._multiple._sequence->codeUnitAt(
                         index % this->_container._multiple._sequence->length());
@@ -1605,7 +1737,7 @@ SuperString::MultipleSequence::substring(SuperString::Size startIndex,
 }
 
 SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream) const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::MULTIPLE:
             for(Size i = 0; i < this->_container._multiple._time; i++) {
                 this->_container._multiple._sequence->print(stream);
@@ -1624,7 +1756,7 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, Sup
                                                        SuperString::Size endIndex) const {
     Bool printing = FALSE;
     Size unitLength;
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::MULTIPLE:
             unitLength = this->_container._multiple._sequence->length();
             for(Size i = 0; i < this->_container._multiple._time; i++) {
@@ -1720,7 +1852,7 @@ SuperString SuperString::MultipleSequence::trimRight() const {
 }
 
 SuperString::Size SuperString::MultipleSequence::keepingCost() const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::MULTIPLE:
             return sizeof(MultipleSequence) + this->_container._multiple._sequence->keepingCost();
         case Kind::RECONSTRUCTED:
@@ -1730,7 +1862,7 @@ SuperString::Size SuperString::MultipleSequence::keepingCost() const {
 }
 
 SuperString::Size SuperString::MultipleSequence::reconstructionCost(const StringSequence *sequence) const {
-    switch(this->_kind) {
+    switch(this->kind()) {
         case Kind::MULTIPLE:
             return sizeof(SubstringSequence) +
                    this->_container._multiple._sequence->length() * this->_container._multiple._time * 2;
@@ -1741,7 +1873,7 @@ SuperString::Size SuperString::MultipleSequence::reconstructionCost(const String
 
 void SuperString::MultipleSequence::reconstruct(const StringSequence *sequence) const {
     MultipleSequence *self = ((MultipleSequence *) ((Size) this));
-    if(self->_kind == Kind::MULTIPLE) {
+    if(self->kind() == Kind::MULTIPLE) {
         struct MultipleMetaInfo old = self->_container._multiple;
         if(sequence == old._sequence) {
             struct ReconstructedMetaInfo nw;
@@ -1753,12 +1885,24 @@ void SuperString::MultipleSequence::reconstruct(const StringSequence *sequence) 
             }
             old._sequence->removeReferencer(self);
             if(old._sequence->refCount() == 0 && old._sequence->freeingCost() < old._sequence->keepingCost()) {
-                delete old._sequence;
+                old._sequence->doDelete();
             }
             self->_kind = Kind::RECONSTRUCTED;
             self->_container._reconstructed = nw;
         }
     }
+}
+
+void SuperString::MultipleSequence::doDelete() const {
+    MultipleSequence *self = ((MultipleSequence *) (Size) this);
+    if(self->isToBeDeleted() == FALSE) {
+        self->_kind = (Kind) (((char) self->kind()) + 0b10000000); // Just a trick, we don't want any more variable
+        delete self;
+    }
+}
+
+SuperString::Bool SuperString::MultipleSequence::isToBeDeleted() const {
+    return (((char) this->_kind) & 0b10000000) == 0b10000000;
 }
 
 //*-- SuperString::ASCII
