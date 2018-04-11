@@ -18,6 +18,9 @@ SuperString uses Rope (data structure) and game theory techniques.
 ## Roadmap
 - [ ] Optimize even more (I think it's possible :sunglasses:)
 - [ ] Support for LE version of UTF-16 (UTF-16LE)
+- [ ] Enrich test and benchmark case, compares with existing Rope and other libraries 
+- [ ] Test on Windows and other platforms
+- [ ] Test on multithreaded environement
 
 ## Documentation and API
 [Visit documentation page](https://www.boutglay.com/SuperString)
