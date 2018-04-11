@@ -18,6 +18,18 @@ a:visited {
     padding-left: 2em;
     padding-right: 2em;
 }
+
+.footer {
+    margin: 0px;
+    color: #333;
+    text-align: center;
+    padding-top: 2em;
+    padding-bottom: 2em;
+    border-top: 1px solid #EEE;
+    padding-left: 2em;
+    padding-right: 2em;
+}
+
 .header h1 {
     margin: 0.2em 0px;
     font-size: 3em;
