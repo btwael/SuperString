@@ -15,7 +15,7 @@
 
 /**
  * `SuperString` is an automatically garbage collected string designed
- * with memory optimisation in mind.
+ * with memory efficiency in mind.
  */
 class SuperString {
 public:
@@ -28,7 +28,7 @@ public:
         UTF8,
         UTF16BE,
         UTF32
-        // TODO: support 4 bytes utf16, improve LE&BE version
+        // TODO: Support LE version of UTF-16
     };
 
     //*-- Error
@@ -44,7 +44,9 @@ public:
     };
 
     //*-- Byte
-    // TODO: comment this.
+    /**
+     * An unsigned 8-bit type, mainly to represent raw data.
+     */
     typedef unsigned char Byte;
 
     //*-- Size
@@ -125,33 +127,6 @@ public:
         SuperString::Result<T, E> &operator=(const SuperString::Result<T, E> &other);
     };
 
-    //*-- Pair<T, U>
-    // TODO: comments this
-    template<class T, class U>
-    class Pair {
-    private:
-        T _0;
-        U _1;
-
-    public:
-        //*- Constructor
-        Pair();
-
-        Pair(T $0, U $1);
-
-        //*- Getters
-
-        T first() const;
-
-        U second() const;
-
-        //*- Setters
-
-        void first(T $0);
-
-        void second(U $1);
-    };
-
     //*-- SuperString
 public:
     //*- Constructors
@@ -175,10 +150,14 @@ public:
 
     //*- Getters
 
-    // TODO: comment
+    /**
+     * Returns `SuperString::TRUE` if this string is empty.
+     */
     SuperString::Bool isEmpty() const;
 
-    // TODO: comment
+    /**
+     * Returns `SuperString::TRUE` if this string is not empty.
+     */
     SuperString::Bool isNotEmpty() const;
 
     /**
@@ -189,7 +168,7 @@ public:
     //*- Methods
 
     /**
-     * Returns the 32-bit UTF-16 code unit at the given index.
+     * Returns the 32-bit code unit at the given index.
      */
     SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const;
 
@@ -198,10 +177,16 @@ public:
      */
     int compareTo(const SuperString &other) const;
 
-    // TODO: comment
+    /**
+     * Returns the position of the first occurrence of [other] in this string,
+     * if not found, it returns SuperString::Error::NotFound.
+     */
     SuperString::Result<int, SuperString::Error> indexOf(SuperString other) const;
 
-    // TODO: comment
+    /**
+     * Returns the position of the last occurrence of [other] in this string,
+     * if not found, returns SuperString::Error::NotFound.
+     */
     SuperString::Result<int, SuperString::Error> lastIndexOf(SuperString other) const;
 
     /**
@@ -261,31 +246,47 @@ public:
     SuperString &operator=(const SuperString &other);
 
     /**
-     * Returns `TRUE` if this is equal to [other].
+     * Returns `SuperString::TRUE` if this is equal to [other].
      */
     SuperString::Bool operator==(const SuperString &other) const;
 
     //*- Statics
 
     /**
-     * Creates a string for the given const (char *) [chars].
+     * Creates a string for the given `const char *` [chars] (UTF-8 default as encoding),
+     * without copying the data of [chars].
      */
     static SuperString Const(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
-    // TODO: comment
+    /**
+     * Creates a string for the given `const int *` [chars] (UTF-32 default as encoding),
+     * without copying the data of [chars].
+     */
     static SuperString Const(const int *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF32);
 
-    // TODO: comment
+    /**
+     * Creates a string for the given `const SuperString::Byte *` [bytes] (UTF-8 default as encoding),
+     * without copying the data of [bytes].
+     */
     static SuperString
     Const(const SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
-    // TODO: comment
+    /**
+     * Creates a string for the given `const char *` [chars] (UTF-8 default as encoding),
+     * by copying the data of [chars].
+     */
     static SuperString Copy(const char *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
-    // TODO: comment
+    /**
+     * Creates a string for the given `const int *` [chars] (UTF-32 default as encoding),
+     * by copying the data of [chars].
+     */
     static SuperString Copy(const int *chars, SuperString::Encoding encoding = SuperString::Encoding::UTF32);
 
-    // TODO: comment
+    /**
+     * Creates a string for the given `const SuperString::Byte *` [bytes] (UTF-8 default as encoding),
+     * by copying the data of [bytes].
+     */
     static SuperString
     Copy(const SuperString::Byte *bytes, SuperString::Encoding encoding = SuperString::Encoding::UTF8);
 
@@ -351,6 +352,32 @@ private:
         };
     };
 
+    //*-- Pair<T, U>
+    template<class T, class U>
+    class Pair {
+    private:
+        T _0;
+        U _1;
+
+    public:
+        //*- Constructor
+        Pair();
+
+        Pair(T $0, U $1);
+
+        //*- Getters
+
+        T first() const;
+
+        U second() const;
+
+        //*- Setters
+
+        void first(T $0);
+
+        void second(U $1);
+    };
+
     //*-- StringSequence (abstract|internal)
     class StringSequence {
     private:
@@ -372,12 +399,12 @@ private:
         //*- Getters
 
         /**
-         * Returns if this string is empty.
+         * Returns `SuperString::TRUE` if this string is empty.
          */
         virtual SuperString::Bool isEmpty() const;
 
         /**
-         * Returns if this string is not empty.
+         * Returns `SuperString::TRUE` if this string is not empty.
          */
         virtual SuperString::Bool isNotEmpty() const;
 
@@ -389,7 +416,7 @@ private:
         //*- Methods
 
         /**
-         * Returns the 32-bit UTF-16 code unit at the given index.
+         * Returns the 32-bit code unit at the given index.
          */
         virtual SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const = 0;
 
@@ -404,8 +431,15 @@ private:
         virtual SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
 
+        /**
+         * Prints this string to the given [stream].
+         */
         virtual SuperString::Bool print(std::ostream &stream) const = 0;
 
+        /**
+         * Prints a substring of this string that starts at [startIndex], inclusive,
+         * and end at [endIndex], exclusive, to given [stream].
+         */
         virtual SuperString::Bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
 
@@ -450,6 +484,7 @@ private:
 
     protected:
         virtual void doDelete() const = 0;
+
         virtual SuperString::Bool isToBeDeleted() const = 0;
 
     private:
@@ -503,6 +538,7 @@ private:
 
     protected:
         virtual void doDelete() const = 0;
+
         virtual SuperString::Bool isToBeDeleted() const = 0;
     };
 
@@ -556,6 +592,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -608,6 +645,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -661,6 +699,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -714,6 +753,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -767,6 +807,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -820,6 +861,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -873,6 +915,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -925,6 +968,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -996,6 +1040,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -1078,6 +1123,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -1147,6 +1193,7 @@ private:
 
     protected:
         void doDelete() const;
+
         SuperString::Bool isToBeDeleted() const;
     };
 
@@ -1339,39 +1386,6 @@ SuperString::Result<T, E> &SuperString::Result<T, E>::operator=(const SuperStrin
     return *this;
 }
 
-//*-- SuperString::Pair<T, U>
-template<class T, class U>
-SuperString::Pair<T, U>::Pair() {
-    // nothing go here
-}
-
-template<class T, class U>
-SuperString::Pair<T, U>::Pair(T $0, U $1)
-        : _0($0),
-          _1($1) {
-    // nothing go here
-}
-
-template<class T, class U>
-T SuperString::Pair<T, U>::first() const {
-    return this->_0;
-}
-
-template<class T, class U>
-U SuperString::Pair<T, U>::second() const {
-    return this->_1;
-}
-
-template<class T, class U>
-void SuperString::Pair<T, U>::first(T $0) {
-    this->_0 = $0;
-}
-
-template<class T, class U>
-void SuperString::Pair<T, U>::second(U $1) {
-    this->_1 = $1;
-}
-
 //*-- SuperString::SingleLinkedList<E> (internal)
 template<class E>
 SuperString::SingleLinkedList<E>::SingleLinkedList()
@@ -1446,6 +1460,39 @@ SuperString::SingleLinkedList<E>::Node<Ei>::Node(E data)
         : _data(data),
           _next(NULL) {
     // nothing go here
+}
+
+//*-- SuperString::Pair<T, U>
+template<class T, class U>
+SuperString::Pair<T, U>::Pair() {
+    // nothing go here
+}
+
+template<class T, class U>
+SuperString::Pair<T, U>::Pair(T $0, U $1)
+        : _0($0),
+          _1($1) {
+    // nothing go here
+}
+
+template<class T, class U>
+T SuperString::Pair<T, U>::first() const {
+    return this->_0;
+}
+
+template<class T, class U>
+U SuperString::Pair<T, U>::second() const {
+    return this->_1;
+}
+
+template<class T, class U>
+void SuperString::Pair<T, U>::first(T $0) {
+    this->_0 = $0;
+}
+
+template<class T, class U>
+void SuperString::Pair<T, U>::second(U $1) {
+    this->_1 = $1;
 }
 
 //*-- SuperString (statics)
