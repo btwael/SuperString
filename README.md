@@ -15,7 +15,7 @@ SuperString uses Rope (data structure) and game theory techniques.
 - **MIT Licence**
 
 ## Roadmap
-- [ ] Optimize even more (I think it's possible :sunglasses::)
+- [ ] Optimize even more (I think it's possible :sunglasses:)
 - [ ] Support for LE version of UTF-16 (UTF-16LE)
 
 ## Documentation and API
