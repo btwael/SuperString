@@ -15,25 +15,18 @@ int main() {
     fread(content, fsize, 1, f);
     fclose(f);
 
-    SuperString string = SuperString::Const(content, SuperString::Encoding::ASCII);
+    SuperString string = SuperString::Copy(content, SuperString::Encoding::ASCII);
+    free(content);
 
     std::vector<SuperString> lines;
     SuperString::Size last = 0;
-    for(SuperString::Size i = 0; i < string.length(); i++) {
+    for(SuperString::Size i = 0, length = string.length(); i < length; i++) {
         int c = string.codeUnitAt(i).ok();
         if(c == '\n') {
             lines.push_back(string.substring(last, i).ok());
-            last = i;
+            last = i + 1;
         }
     }
 
-    // show each line
-    //std::cout << lines.size();
-    //for(SuperString::Size i = 0; i < lines.size(); i++) {
-        //std::cout << lines.at(i);
-    //}
-
-    // free content
-    free(content);
     return 0;
 }

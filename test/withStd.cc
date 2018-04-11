@@ -16,18 +16,17 @@ int main() {
     fclose(f);
 
     std::string string(content);
+    free(content);
 
     std::vector<std::string> lines;
     unsigned long last = 0;
-    for(unsigned long i = 0; i < string.size(); i++) {
+    for(unsigned long i = 0, length = string.size(); i < length; i++) {
         int c = string.at(i);
         if(c == '\n') {
             lines.push_back(string.substr(last, last - i));
-            last = i;
+            last = i + 1;
         }
     }
 
-    // free content
-    free(content);
     return 0;
 }
