@@ -8,5 +8,3 @@ include_directories(include)
 
 # the SuperString library
 add_library(SuperString STATIC src/SuperString.cc)
-
-add_subdirectory(test)
