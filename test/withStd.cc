@@ -23,7 +23,7 @@ int main() {
     for(unsigned long i = 0, length = string.size(); i < length; i++) {
         int c = string.at(i);
         if(c == '\n') {
-            lines.push_back(string.substr(last, last - i));
+            lines.push_back(string.substr(last, i - last));
             last = i + 1;
         }
     }
