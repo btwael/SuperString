@@ -1,5 +1,5 @@
 # SuperString
-SuperString is an efficient string library for C++, that achieves a remarquable memory and CPU optimization.
+SuperString is an efficient string library for C++, that achieves a remarkable memory and CPU optimization.
 
 SuperString uses Rope (data structure) and game theory techniques.
 
