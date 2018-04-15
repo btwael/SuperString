@@ -55,14 +55,6 @@ public:
      */
     typedef unsigned long Size;
 
-    //*-- Bool
-    /**
-     * The famous boolean type with its two values `FALSE` and `TRUE`.
-     */
-    typedef unsigned char Bool;
-    static const Bool FALSE = ((Bool) 0);
-    static const Bool TRUE = ((Bool) 1);
-
     //*-- Result<T, E>
     /**
      * `Result<T, E>` is the type used for returning and propagating errors.
@@ -96,14 +88,14 @@ public:
         E err() const;
 
         /**
-         * Returns `TRUE` if the result is Ok.
+         * Returns true if the result is Ok.
          */
-        SuperString::Bool isErr() const;
+        bool isErr() const;
 
         /**
-         * Returns `TRUE` if the result is Err.
+         * Returns true if the result is Err.
          */
-        SuperString::Bool isOk() const;
+        bool isOk() const;
 
         /**
          * Returns the success value.
@@ -151,14 +143,14 @@ public:
     //*- Getters
 
     /**
-     * Returns `SuperString::TRUE` if this string is empty.
+     * Returns true if this string is empty.
      */
-    SuperString::Bool isEmpty() const;
+    bool isEmpty() const;
 
     /**
-     * Returns `SuperString::TRUE` if this string is not empty.
+     * Returns true if this string is not empty.
      */
-    SuperString::Bool isNotEmpty() const;
+    bool isNotEmpty() const;
 
     /**
      * Returns the length of this string.
@@ -199,13 +191,13 @@ public:
     /**
      * Outputs the whole string to the given [stream].
      */
-    SuperString::Bool print(std::ostream &stream) const;
+    bool print(std::ostream &stream) const;
 
     /**
      * Outputs the substring from [startIndex] to [endIndex]
      * to the given [stream].
      */
-    SuperString::Bool print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const;
+    bool print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const;
 
     /**
      * Returns the string without any leading and trailing whitespace.
@@ -248,7 +240,7 @@ public:
     /**
      * Returns `SuperString::TRUE` if this is equal to [other].
      */
-    SuperString::Bool operator==(const SuperString &other) const;
+    bool operator==(const SuperString &other) const;
 
     //*- Statics
 
@@ -401,12 +393,12 @@ private:
         /**
          * Returns `SuperString::TRUE` if this string is empty.
          */
-        virtual SuperString::Bool isEmpty() const;
+        virtual bool isEmpty() const;
 
         /**
          * Returns `SuperString::TRUE` if this string is not empty.
          */
-        virtual SuperString::Bool isNotEmpty() const;
+        virtual bool isNotEmpty() const;
 
         /**
          * Returns the length of this sequence.
@@ -434,13 +426,13 @@ private:
         /**
          * Prints this string to the given [stream].
          */
-        virtual SuperString::Bool print(std::ostream &stream) const = 0;
+        virtual bool print(std::ostream &stream) const = 0;
 
         /**
          * Prints a substring of this string that starts at [startIndex], inclusive,
          * and end at [endIndex], exclusive, to given [stream].
          */
-        virtual SuperString::Bool
+        virtual bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
 
         /**
@@ -485,10 +477,10 @@ private:
     protected:
         virtual void doDelete() const = 0;
 
-        virtual SuperString::Bool isToBeDeleted() const = 0;
+        virtual bool isToBeDeleted() const = 0;
 
     private:
-        SuperString::Bool _substringMatches(SuperString::Size startIndex, SuperString other) const;
+        bool _substringMatches(SuperString::Size startIndex, SuperString other) const;
 
         friend class SuperString;
     };
@@ -502,9 +494,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         virtual SuperString::Size length() const = 0 /*override*/;
 
@@ -515,9 +507,9 @@ private:
         virtual SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const = 0 /*override*/;
 
-        virtual SuperString::Bool print(std::ostream &stream) const = 0 /*override*/;
+        virtual bool print(std::ostream &stream) const = 0 /*override*/;
 
-        virtual SuperString::Bool
+        virtual bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0 /*override*/;
 
         virtual SuperString trim() const = 0 /*override*/;
@@ -539,15 +531,21 @@ private:
     protected:
         virtual void doDelete() const = 0;
 
-        virtual SuperString::Bool isToBeDeleted() const = 0;
+        virtual bool isToBeDeleted() const = 0;
     };
 
     //*-- ConstASCIISequence (internal)
     class ConstASCIISequence: public StringSequence {
     private:
+        enum class Status {
+            LengthNotComputed,
+            LengthComputed,
+            ToBeDestructed
+        };
+
         const Byte *_bytes;
         SuperString::Size _length;
-        SuperString::Bool _lengthComputed;
+        Status _status;
 
     public:
         //*- Constructors
@@ -560,9 +558,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -573,9 +571,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -593,7 +591,7 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- CopyASCIISequence (internal)
@@ -615,9 +613,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -628,9 +626,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -646,15 +644,21 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*--ConstUTF8Sequence (internal)
     class ConstUTF8Sequence: public StringSequence {
     private:
+        enum class Status {
+            LengthNotComputed,
+            LengthComputed,
+            ToBeDestructed
+        };
+
         const Byte *_bytes;
         SuperString::Size _length;
-        SuperString::Bool _lengthComputed;
+        Status _status;
 
     public:
         //*- Constructors
@@ -667,9 +671,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -680,9 +684,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -700,7 +704,7 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- CopyUTF8Sequence (internal)
@@ -723,9 +727,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -736,9 +740,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -754,15 +758,21 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- ConstUTF16BESequence (internal)
     class ConstUTF16BESequence: public StringSequence {
     private:
+        enum class Status {
+            LengthNotComputed,
+            LengthComputed,
+            ToBeDestructed
+        };
+
         const Byte *_bytes;
         SuperString::Size _length;
-        SuperString::Bool _lengthComputed;
+        Status _status;
 
     public:
         //*- Constructors
@@ -775,9 +785,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -788,9 +798,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -808,7 +818,7 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- CopyUTF16BESequence (internal)
@@ -831,9 +841,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -844,9 +854,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -862,15 +872,21 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- ConstUTF32Sequence (internal)
     class ConstUTF32Sequence: public StringSequence {
     private:
+        enum class Status {
+            LengthNotComputed,
+            LengthComputed,
+            ToBeDestructed
+        };
+
         const int *_bytes;
         SuperString::Size _length;
-        SuperString::Bool _lengthComputed;
+        Status _status;
 
     public:
         //*- Constructors
@@ -883,9 +899,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -896,9 +912,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -916,7 +932,7 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- CopyUTF32Sequence (internal)
@@ -938,9 +954,9 @@ private:
 
         //*- Getters
 
-        // inherited: SuperString::Bool isEmpty() const;
+        // inherited: bool isEmpty() const;
 
-        // inherited: SuperString::Bool isNotEmpty() const;
+        // inherited: bool isNotEmpty() const;
 
         SuperString::Size length() const /*override*/;
 
@@ -951,9 +967,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -969,7 +985,7 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- SubstringSequence (internal)
@@ -1017,9 +1033,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -1041,7 +1057,7 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- ConcatenationSequence (internal)
@@ -1102,9 +1118,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -1124,7 +1140,7 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
     //*-- MultipleSequence (internal)
@@ -1172,9 +1188,9 @@ private:
         SuperString::Result<SuperString, SuperString::Error>
         substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
-        SuperString::Bool print(std::ostream &stream) const /*override*/;
+        bool print(std::ostream &stream) const /*override*/;
 
-        SuperString::Bool
+        bool
         print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
@@ -1194,10 +1210,10 @@ private:
     protected:
         void doDelete() const;
 
-        SuperString::Bool isToBeDeleted() const;
+        bool isToBeDeleted() const;
     };
 
-    inline static SuperString::Bool isWhiteSpace(int codeUnit);
+    inline static bool isWhiteSpace(int codeUnit);
 
     //
     class ASCII {
@@ -1346,12 +1362,12 @@ E SuperString::Result<T, E>::err() const {
 }
 
 template<class T, class E>
-SuperString::Bool SuperString::Result<T, E>::isErr() const {
+bool SuperString::Result<T, E>::isErr() const {
     return this->_err != NULL;
 }
 
 template<class T, class E>
-SuperString::Bool SuperString::Result<T, E>::isOk() const {
+bool SuperString::Result<T, E>::isOk() const {
     return this->_ok != NULL;
 }
 
@@ -1496,7 +1512,7 @@ void SuperString::Pair<T, U>::second(U $1) {
 }
 
 //*-- SuperString (statics)
-SuperString::Bool SuperString::isWhiteSpace(int codeUnit) {
+bool SuperString::isWhiteSpace(int codeUnit) {
     if(codeUnit <= 32) {
         return (
                 (codeUnit == 32) || // Space.

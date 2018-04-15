@@ -23,7 +23,7 @@
                 <!-- Introduction -->
                 <h1 class="content-subhead" id="c-intro">Introduction</h1>
                 <p>SuperString is an efficient string library for C++, that achieves a remarquable memory and CPU optimization.</p>
-                <p>SuperString uses <a href="#">Rope (data structure)</a> and game theory techniques.</p>
+                <p>SuperString uses <a href="https://en.wikipedia.org/wiki/Rope_%28data_structure%29">Rope (data structure)</a> and game theory techniques.</p>
                 <img class="pure-img" src="./img/text_line_split_bench.png">
                 <p>This two plots show the comparison between <span class="inlinehl">SuperString</span> and <span class="inlinehl">std::string</span> in term of memory consumption and number of executed instructions to perform the some task, split a text (209 Ko, 5000 lines, 209166 characters) into lines and push them into an <span class="inlinehl">std::vector</span>.</p>
                 <!-- Features -->
@@ -87,7 +87,6 @@
                                     <a href="#c-api-types-error"><li>SuperString::Error</li></a>
                                     <a href="#c-api-types-byte"><li>SuperString::Byte</li></a>
                                     <a href="#c-api-types-size"><li>SuperString::Size</li></a>
-                                    <a href="#c-api-types-bool"><li>SuperString::Bool</li></a>
                                     <a href="#c-api-types-result"><li>SuperString::Result&lt;T, E></li></a>
                                 </ol>
                             </li></a>
@@ -275,7 +274,7 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> isEmpty() -->
                 <h3 class="content-subhead3" id="c-api-methods-isempty">isEmpty()</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-bool">Bool</a> <span class="token">isEmpty</span>() <span class="modifier">const</span>;
+                    <span class="keyword">bool</span> <span class="token">isEmpty</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns true if this string is empty.</p>
                 <pre><code class="language-cpp">#include "SuperString.hh"
@@ -285,9 +284,9 @@ int main(int argc, char const *argv[]) {
     SuperString s2 = SuperString::Const("");
     SuperString s3 = SuperString::Const("SuperString");
 
-    s1.isEmpty(); // SuperString::TRUE
-    s2.isEmpty(); // SuperString::TRUE
-    s3.isEmpty(); // SuperString::FALSE
+    s1.isEmpty(); // true
+    s2.isEmpty(); // true
+    s3.isEmpty(); // false
 
     return 0;
 }</code></pre>
@@ -295,7 +294,7 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> isNotEmpty() -->
                 <h3 class="content-subhead3" id="c-api-methods-isnotempty">isNotEmpty()</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-bool">Bool</a> <span class="token">isNotEmpty</span>() <span class="modifier">const</span>;
+                    <span class="keyword">bool</span> <span class="token">isNotEmpty</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns true if this string is not empty.</p>
                 <pre><code class="language-cpp">#include "SuperString.hh"
@@ -305,9 +304,9 @@ int main(int argc, char const *argv[]) {
     SuperString s2 = SuperString::Const("");
     SuperString s3 = SuperString::Const("SuperString");
 
-    s1.isNotEmpty(); // SuperString::FALSE
-    s2.isNotEmpty(); // SuperString::FALSE
-    s3.isNotEmpty(); // SuperString::TRUE
+    s1.isNotEmpty(); // false
+    s2.isNotEmpty(); // false
+    s3.isNotEmpty(); // true
 
     return 0;
 }</code></pre>
@@ -561,18 +560,6 @@ int main(int argc, char const *argv[]) {
 };
 </code></pre>
 
-                <!-- API -> types -> bool -->
-                <h3 class="content-subhead3" id="c-api-types-bool">SuperString::Bool</h3>
-                <p>This type is defined as fellow:</p>
-                <pre><code class="language-cpp">class SuperString {
-...
-    typedef unsigned char Bool;
-    static const Bool FALSE = ((Bool) 0);
-    static const Bool TRUE = ((Bool) 1);
-...
-};
-</code></pre>
-
                 <!-- API -> types -> result -->
                 <h3 class="content-subhead3" id="c-api-types-result">SuperString::Result&lt;T, E></h3>
                 <p>This type is inspired from Rust type <span class="inlinehl">std::Result&lt;T, E></span>, and defined as:</p>
@@ -599,14 +586,14 @@ int main(int argc, char const *argv[]) {
         E err() const;
 
         /**
-         * Returns `TRUE` if the result is Ok.
+         * Returns true if the result is Ok.
          */
-        SuperString::Bool isErr() const;
+        bool isErr() const;
 
         /**
-         * Returns `TRUE` if the result is Err.
+         * Returns true if the result is Err.
          */
-        SuperString::Bool isOk() const;
+        bool isOk() const;
 
         /**
          * Returns the success value.

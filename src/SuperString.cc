@@ -28,11 +28,11 @@ SuperString::~SuperString() {
     }
 }
 
-SuperString::Bool SuperString::isEmpty() const {
+bool SuperString::isEmpty() const {
     return this->length() == 0;
 }
 
-SuperString::Bool SuperString::isNotEmpty() const {
+bool SuperString::isNotEmpty() const {
     return this->length() != 0;
 }
 
@@ -91,19 +91,18 @@ SuperString::substring(SuperString::Size startIndex, SuperString::Size endIndex)
     return Result<SuperString, Error>(Error::Unexpected);
 }
 
-SuperString::Bool SuperString::print(std::ostream &stream) const {
+bool SuperString::print(std::ostream &stream) const {
     if(this->_sequence != NULL) {
         return this->_sequence->print(stream);
     }
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool
-SuperString::print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const {
+bool SuperString::print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const {
     if(this->_sequence != NULL) {
         return this->_sequence->print(stream, startIndex, endIndex);
     }
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::trim() const {
@@ -157,7 +156,7 @@ SuperString &SuperString::operator=(const SuperString &other) {
     return *this;
 }
 
-SuperString::Bool SuperString::operator==(const SuperString &other) const {
+bool SuperString::operator==(const SuperString &other) const {
     return this->compareTo(other) == 0;
 }
 
@@ -225,11 +224,11 @@ SuperString::StringSequence::~StringSequence() {
     // nothing go here
 }
 
-SuperString::Bool SuperString::StringSequence::isEmpty() const {
+bool SuperString::StringSequence::isEmpty() const {
     return this->length() == 0;
 }
 
-SuperString::Bool SuperString::StringSequence::isNotEmpty() const {
+bool SuperString::StringSequence::isNotEmpty() const {
     return this->length() > 0;
 }
 
@@ -296,21 +295,21 @@ void SuperString::StringSequence::reconstructReferencers() {
     }
 }
 
-SuperString::Bool SuperString::StringSequence::_substringMatches(SuperString::Size startIndex,
+bool SuperString::StringSequence::_substringMatches(SuperString::Size startIndex,
                                                                  SuperString other) const {
     if(other.isEmpty()) {
-        return TRUE;
+        return true;
     }
     Size length = other.length();
     if(startIndex + length > this->length()) {
-        return FALSE;
+        return false;
     }
     for(int i = 0; i < length; i++) {
         if(this->codeUnitAt(i + startIndex).ok() != other.codeUnitAt(i).ok()) {
-            return FALSE;
+            return false;
         }
     }
-    return TRUE;
+    return true;
 }
 
 //*-- SuperString::ReferenceStringSequence (abstract|internal)
@@ -321,7 +320,7 @@ SuperString::ReferenceStringSequence::~ReferenceStringSequence() {
 //*-- SuperString::ConstASCIISequence (internal)
 SuperString::ConstASCIISequence::ConstASCIISequence(const Byte *bytes)
         : _bytes(bytes),
-          _lengthComputed(SuperString::FALSE) {
+          _status(SuperString::ConstASCIISequence::Status::LengthNotComputed) {
     // nothing go here
 }
 
@@ -330,9 +329,9 @@ SuperString::ConstASCIISequence::~ConstASCIISequence() {
 }
 
 SuperString::Size SuperString::ConstASCIISequence::length() const /*override*/ {
-    if(this->_lengthComputed == SuperString::FALSE) {
+    if(this->_status == Status::LengthNotComputed) {
         ConstASCIISequence *self = ((ConstASCIISequence *) ((Size) this)); // to keep this method `const`
-        self->_lengthComputed = SuperString::TRUE;
+        self->_status = Status::LengthComputed;
         self->_length = SuperString::ASCII::length(this->_bytes);
     }
     return this->_length;
@@ -357,18 +356,18 @@ SuperString::ConstASCIISequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::ConstASCIISequence::print(std::ostream &stream) const {
+bool SuperString::ConstASCIISequence::print(std::ostream &stream) const {
     SuperString::ASCII::print(stream, this->_bytes);
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::ConstASCIISequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::ConstASCIISequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                          SuperString::Size endIndex) const {
     if(this->length() < startIndex || this->length() < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::ASCII::print(stream, this->_bytes, startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::ConstASCIISequence::trim() const {
@@ -390,14 +389,14 @@ SuperString::Size SuperString::ConstASCIISequence::keepingCost() const {
 
 void SuperString::ConstASCIISequence::doDelete() const {
     ConstASCIISequence *self = ((ConstASCIISequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
-        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+    if(self->isToBeDeleted() == false) {
+        self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::ConstASCIISequence::isToBeDeleted() const {
-    return this->_lengthComputed == ((Bool) 2);
+bool SuperString::ConstASCIISequence::isToBeDeleted() const {
+    return this->_status == Status::ToBeDestructed;
 }
 
 //*-- SuperString::CopyASCIISequence (internal)
@@ -445,18 +444,18 @@ SuperString::CopyASCIISequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::CopyASCIISequence::print(std::ostream &stream) const {
+bool SuperString::CopyASCIISequence::print(std::ostream &stream) const {
     SuperString::ASCII::print(stream, this->_data);
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::CopyASCIISequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::CopyASCIISequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                         SuperString::Size endIndex) const {
     if(this->length() < startIndex || this->length() < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::ASCII::print(stream, this->_data, startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::CopyASCIISequence::trim() const {
@@ -482,20 +481,20 @@ SuperString::Size SuperString::CopyASCIISequence::keepingCost() const {
 
 void SuperString::CopyASCIISequence::doDelete() const {
     CopyASCIISequence *self = ((CopyASCIISequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
+    if(self->isToBeDeleted() == false) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::CopyASCIISequence::isToBeDeleted() const {
+bool SuperString::CopyASCIISequence::isToBeDeleted() const {
     return this->_length == 0;
 }
 
 //*-- SuperString::ConstUTF8Sequence (internal)
 SuperString::ConstUTF8Sequence::ConstUTF8Sequence(const Byte *bytes)
         : _bytes(bytes),
-          _lengthComputed(SuperString::FALSE) {
+          _status(SuperString::ConstUTF8Sequence::Status::LengthNotComputed) {
     // nothing go here
 }
 
@@ -504,9 +503,9 @@ SuperString::ConstUTF8Sequence::~ConstUTF8Sequence() {
 }
 
 SuperString::Size SuperString::ConstUTF8Sequence::length() const /*override*/ {
-    if(this->_lengthComputed == FALSE) {
+    if(this->_status == Status::LengthNotComputed) {
         ConstUTF8Sequence *self = ((ConstUTF8Sequence *) ((Size) this)); // to keep this method `const`
-        self->_lengthComputed = SuperString::TRUE;
+        self->_status = Status::LengthComputed;
         self->_length = SuperString::UTF8::length(this->_bytes);
     }
     return this->_length;
@@ -528,19 +527,19 @@ SuperString::ConstUTF8Sequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::ConstUTF8Sequence::print(std::ostream &stream) const {
+bool SuperString::ConstUTF8Sequence::print(std::ostream &stream) const {
     SuperString::UTF8::print(stream, this->_bytes);
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::ConstUTF8Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::ConstUTF8Sequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                         SuperString::Size endIndex) const {
     Size length = this->length();
     if(length < startIndex || length < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::UTF8::print(stream, this->_bytes, startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::ConstUTF8Sequence::trim() const {
@@ -584,14 +583,14 @@ SuperString::Size SuperString::ConstUTF8Sequence::keepingCost() const {
 
 void SuperString::ConstUTF8Sequence::doDelete() const {
     ConstUTF8Sequence *self = ((ConstUTF8Sequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
-        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+    if(self->isToBeDeleted() == false) {
+        self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::ConstUTF8Sequence::isToBeDeleted() const {
-    return this->_lengthComputed == ((Bool) 2);
+bool SuperString::ConstUTF8Sequence::isToBeDeleted() const {
+    return this->_status == Status::ToBeDestructed;
 }
 
 //*-- SuperString::CopyUTF8Sequence (internal)
@@ -641,19 +640,19 @@ SuperString::CopyUTF8Sequence::substring(SuperString::Size startIndex, SuperStri
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::CopyUTF8Sequence::print(std::ostream &stream) const {
+bool SuperString::CopyUTF8Sequence::print(std::ostream &stream) const {
     SuperString::UTF8::print(stream, this->_data);
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::CopyUTF8Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::CopyUTF8Sequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                        SuperString::Size endIndex) const {
     Size length = this->length();
     if(length < startIndex || length < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::UTF8::print(stream, this->_data, startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::CopyUTF8Sequence::trim() const {
@@ -698,20 +697,20 @@ SuperString::Size SuperString::CopyUTF8Sequence::keepingCost() const {
 
 void SuperString::CopyUTF8Sequence::doDelete() const {
     CopyUTF8Sequence *self = ((CopyUTF8Sequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
+    if(self->isToBeDeleted() == false) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::CopyUTF8Sequence::isToBeDeleted() const {
+bool SuperString::CopyUTF8Sequence::isToBeDeleted() const {
     return this->_length == 0;
 }
 
 //*-- ConstUTF16BESequence (internal)
 SuperString::ConstUTF16BESequence::ConstUTF16BESequence(const SuperString::Byte *bytes)
         : _bytes(bytes),
-          _lengthComputed(FALSE) {
+          _status(SuperString::ConstUTF16BESequence::Status::LengthNotComputed) {
     // nothing go here
 }
 
@@ -720,9 +719,9 @@ SuperString::ConstUTF16BESequence::~ConstUTF16BESequence() {
 }
 
 SuperString::Size SuperString::ConstUTF16BESequence::length() const /*override*/ {
-    if(this->_lengthComputed == SuperString::FALSE) {
+    if(this->_status == Status::LengthNotComputed) {
         ConstUTF16BESequence *self = ((ConstUTF16BESequence *) ((Size) this)); // to keep this method `const`
-        self->_lengthComputed = SuperString::TRUE;
+        self->_status = Status::LengthComputed;
         self->_length = SuperString::UTF16BE::length(this->_bytes);
     }
     return this->_length;
@@ -747,19 +746,19 @@ SuperString::ConstUTF16BESequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::ConstUTF16BESequence::print(std::ostream &stream) const {
+bool SuperString::ConstUTF16BESequence::print(std::ostream &stream) const {
     SuperString::UTF16BE::print(stream, this->_bytes, this->length());
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::ConstUTF16BESequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::ConstUTF16BESequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                            SuperString::Size endIndex) const {
     Size length = this->length();
     if(length < startIndex || length < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::UTF16BE::print(stream, this->_bytes, startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::ConstUTF16BESequence::trim() const {
@@ -803,14 +802,14 @@ SuperString::Size SuperString::ConstUTF16BESequence::keepingCost() const {
 
 void SuperString::ConstUTF16BESequence::doDelete() const {
     ConstUTF16BESequence *self = ((ConstUTF16BESequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
-        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+    if(self->isToBeDeleted() == false) {
+        self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::ConstUTF16BESequence::isToBeDeleted() const {
-    return this->_lengthComputed == ((Bool) 2);
+bool SuperString::ConstUTF16BESequence::isToBeDeleted() const {
+    return this->_status == Status::ToBeDestructed;
 }
 
 //*-- SuperString::CopyUTF16BESequence (internal)
@@ -861,19 +860,19 @@ SuperString::CopyUTF16BESequence::substring(SuperString::Size startIndex, SuperS
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::CopyUTF16BESequence::print(std::ostream &stream) const {
+bool SuperString::CopyUTF16BESequence::print(std::ostream &stream) const {
     SuperString::UTF16BE::print(stream, this->_data, this->length());
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::CopyUTF16BESequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::CopyUTF16BESequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                           SuperString::Size endIndex) const {
     Size length = this->length();
     if(length < startIndex || length < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::UTF16BE::print(stream, this->_data, startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::CopyUTF16BESequence::trim() const {
@@ -918,20 +917,20 @@ SuperString::Size SuperString::CopyUTF16BESequence::keepingCost() const {
 
 void SuperString::CopyUTF16BESequence::doDelete() const {
     CopyUTF16BESequence *self = ((CopyUTF16BESequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
+    if(self->isToBeDeleted() == false) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::CopyUTF16BESequence::isToBeDeleted() const {
+bool SuperString::CopyUTF16BESequence::isToBeDeleted() const {
     return this->_length == 0;
 }
 
 //*-- SuperString::ConstUTF32Sequence (internal)
 SuperString::ConstUTF32Sequence::ConstUTF32Sequence(const SuperString::Byte *bytes)
         : _bytes(((const int *) bytes)),
-          _lengthComputed(SuperString::FALSE) {
+          _status(SuperString::ConstUTF32Sequence::Status::LengthNotComputed) {
     // nothing go here
 }
 
@@ -940,9 +939,9 @@ SuperString::ConstUTF32Sequence::~ConstUTF32Sequence() {
 }
 
 SuperString::Size SuperString::ConstUTF32Sequence::length() const /*override*/ {
-    if(this->_lengthComputed == SuperString::FALSE) {
+    if(this->_status == Status::LengthNotComputed) {
         ConstUTF32Sequence *self = ((ConstUTF32Sequence *) ((Size) this)); // to keep this method `const`
-        self->_lengthComputed = SuperString::TRUE;
+        self->_status = Status::LengthComputed;
         self->_length = SuperString::UTF32::length(((const Byte *) this->_bytes));
     }
     return this->_length;
@@ -967,18 +966,18 @@ SuperString::ConstUTF32Sequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::ConstUTF32Sequence::print(std::ostream &stream) const {
+bool SuperString::ConstUTF32Sequence::print(std::ostream &stream) const {
     SuperString::UTF32::print(stream, ((const Byte *) this->_bytes));
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::ConstUTF32Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::ConstUTF32Sequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                          SuperString::Size endIndex) const {
     if(this->length() < startIndex || this->length() < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::UTF32::print(stream, ((Byte *) this->_bytes), startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::ConstUTF32Sequence::trim() const {
@@ -1000,14 +999,14 @@ SuperString::Size SuperString::ConstUTF32Sequence::keepingCost() const {
 
 void SuperString::ConstUTF32Sequence::doDelete() const {
     ConstUTF32Sequence *self = ((ConstUTF32Sequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
-        self->_lengthComputed = (Bool) 2; // Just a trick, we don't want any more variable
+    if(self->isToBeDeleted() == false) {
+        self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::ConstUTF32Sequence::isToBeDeleted() const {
-    return this->_lengthComputed == ((Bool) 2);
+bool SuperString::ConstUTF32Sequence::isToBeDeleted() const {
+    return this->_status == Status::ToBeDestructed;
 }
 
 //*-- SuperString::CopyUTF32Sequence (internal)
@@ -1055,18 +1054,18 @@ SuperString::CopyUTF32Sequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::CopyUTF32Sequence::print(std::ostream &stream) const {
+bool SuperString::CopyUTF32Sequence::print(std::ostream &stream) const {
     SuperString::UTF32::print(stream, ((const Byte *) this->_data));
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::CopyUTF32Sequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::CopyUTF32Sequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                         SuperString::Size endIndex) const {
     if(this->length() < startIndex || this->length() < endIndex) {
-        return FALSE;
+        return false;
     }
     SuperString::UTF32::print(stream, ((const Byte *) this->_data), startIndex, endIndex);
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::CopyUTF32Sequence::trim() const {
@@ -1092,13 +1091,13 @@ SuperString::Size SuperString::CopyUTF32Sequence::keepingCost() const {
 
 void SuperString::CopyUTF32Sequence::doDelete() const {
     CopyUTF32Sequence *self = ((CopyUTF32Sequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
+    if(self->isToBeDeleted() == false) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::CopyUTF32Sequence::isToBeDeleted() const {
+bool SuperString::CopyUTF32Sequence::isToBeDeleted() const {
     return this->_length == 0;
 }
 
@@ -1182,18 +1181,18 @@ SuperString::SubstringSequence::substring(SuperString::Size startIndex, SuperStr
     }
 }
 
-SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream) const {
+bool SuperString::SubstringSequence::print(std::ostream &stream) const {
     switch(this->kind()) {
         case Kind::SUBSTRING:
             return this->_container._substring._sequence->print(stream, this->_container._substring._startIndex,
                                                                 this->_container._substring._endIndex);
         case Kind::RECONSTRUCTED:
             SuperString::UTF32::print(stream, ((Byte *) this->_container._reconstructed._data));
-            return TRUE;
+            return true;
     }
 }
 
-SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::SubstringSequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                         SuperString::Size endIndex) const {
     switch(this->kind()) {
         case Kind::SUBSTRING:
@@ -1202,7 +1201,7 @@ SuperString::Bool SuperString::SubstringSequence::print(std::ostream &stream, Su
                                                                 this->_container._substring._startIndex + endIndex);
         case Kind::RECONSTRUCTED:
             SuperString::UTF32::print(stream, ((Byte *) this->_container._reconstructed._data), startIndex, endIndex);
-            return TRUE;
+            return true;
     }
 }
 
@@ -1279,13 +1278,13 @@ void SuperString::SubstringSequence::reconstruct(const StringSequence *sequence)
 
 void SuperString::SubstringSequence::doDelete() const {
     SubstringSequence *self = ((SubstringSequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
+    if(self->isToBeDeleted() == false) {
         self->_kind = (Kind) (((char) self->kind()) + 0b10000000); // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::SubstringSequence::isToBeDeleted() const {
+bool SuperString::SubstringSequence::isToBeDeleted() const {
     return (((char) this->_kind) & 0b10000000) == 0b10000000;
 }
 
@@ -1408,8 +1407,8 @@ SuperString::ConcatenationSequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream) const {
-    Bool isOk = TRUE;
+bool SuperString::ConcatenationSequence::print(std::ostream &stream) const {
+    bool isOk = true;
     switch(this->kind()) {
         case Kind::CONCATENATION:
             isOk &= this->_container._concatenation._left->print(stream);
@@ -1430,9 +1429,9 @@ SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream
     return isOk;
 }
 
-SuperString::Bool SuperString::ConcatenationSequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::ConcatenationSequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                             SuperString::Size endIndex) const {
-    Bool isOk = TRUE;
+    bool isOk = true;
     switch(this->kind()) {
         case Kind::CONCATENATION:
             if(startIndex < this->_container._concatenation._left->length()) {
@@ -1663,13 +1662,13 @@ void SuperString::ConcatenationSequence::reconstruct(const StringSequence *seque
 
 void SuperString::ConcatenationSequence::doDelete() const {
     ConcatenationSequence *self = ((ConcatenationSequence *) (Size) this);
-    if(this->isToBeDeleted() == FALSE) {
+    if(this->isToBeDeleted() == false) {
         *((char *) &self->_kind) = ((char) self->kind()) + 0b10000000; // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::ConcatenationSequence::isToBeDeleted() const {
+bool SuperString::ConcatenationSequence::isToBeDeleted() const {
     return (((char) this->_kind) & 0b10000000) == 0b10000000;
 }
 
@@ -1736,7 +1735,7 @@ SuperString::MultipleSequence::substring(SuperString::Size startIndex,
     return Result<SuperString, Error>(SuperString(sequence));
 }
 
-SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream) const {
+bool SuperString::MultipleSequence::print(std::ostream &stream) const {
     switch(this->kind()) {
         case Kind::MULTIPLE:
             for(Size i = 0; i < this->_container._multiple._time; i++) {
@@ -1749,12 +1748,12 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream) con
             }
             break;
     }
-    return TRUE;
+    return true;
 }
 
-SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, SuperString::Size startIndex,
+bool SuperString::MultipleSequence::print(std::ostream &stream, SuperString::Size startIndex,
                                                        SuperString::Size endIndex) const {
-    Bool printing = FALSE;
+    bool printing = false;
     Size unitLength;
     switch(this->kind()) {
         case Kind::MULTIPLE:
@@ -1762,14 +1761,14 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, Sup
             for(Size i = 0; i < this->_container._multiple._time; i++) {
                 Size iterationStartIndex = i * unitLength;
                 Size iterationEndIndex = (i + 1) * unitLength;
-                if(printing == FALSE) {
+                if(printing == false) {
                     if(iterationStartIndex <= startIndex) {
                         if(endIndex < iterationEndIndex) {
                             this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
                                                                         endIndex - iterationStartIndex);
                             break;
                         } else {
-                            printing = TRUE;
+                            printing = true;
                             this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
                                                                         unitLength);
                         }
@@ -1788,7 +1787,7 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, Sup
             for(Size i = 0; i < this->_container._reconstructed._time; i++) {
                 Size iterationStartIndex = i * unitLength;
                 Size iterationEndIndex = (i + 1) * unitLength;
-                if(printing == FALSE) {
+                if(printing == false) {
                     if(iterationStartIndex <= startIndex) {
                         if(endIndex < iterationEndIndex) {
                             SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data,
@@ -1796,7 +1795,7 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, Sup
                                                       endIndex - iterationStartIndex);
                             break;
                         } else {
-                            printing = TRUE;
+                            printing = true;
                             SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data,
                                                       startIndex - iterationStartIndex,
                                                       unitLength);
@@ -1813,7 +1812,7 @@ SuperString::Bool SuperString::MultipleSequence::print(std::ostream &stream, Sup
             }
             break;
     }
-    return TRUE;
+    return true;
 }
 
 SuperString SuperString::MultipleSequence::trim() const {
@@ -1895,13 +1894,13 @@ void SuperString::MultipleSequence::reconstruct(const StringSequence *sequence) 
 
 void SuperString::MultipleSequence::doDelete() const {
     MultipleSequence *self = ((MultipleSequence *) (Size) this);
-    if(self->isToBeDeleted() == FALSE) {
+    if(self->isToBeDeleted() == false) {
         self->_kind = (Kind) (((char) self->kind()) + 0b10000000); // Just a trick, we don't want any more variable
         delete self;
     }
 }
 
-SuperString::Bool SuperString::MultipleSequence::isToBeDeleted() const {
+bool SuperString::MultipleSequence::isToBeDeleted() const {
     return (((char) this->_kind) & 0b10000000) == 0b10000000;
 }
 
@@ -2041,17 +2040,17 @@ SuperString::UTF8::rangeIndexes(
         const SuperString::Byte *bytes, SuperString::Size startIndex, SuperString::Size endIndex) {
     Size i = 0;
     Size startOffset, endOffset;
-    Bool first = FALSE, second = FALSE;
+    bool first = false, second = false;
     const Byte *pointer = bytes;
     while(*pointer != '\0') {
         if(!first) {
             if(i == startIndex) {
-                first = TRUE;
+                first = true;
                 startOffset = ((Size) pointer) - ((Size) bytes);
             }
         } else {
             if(i == endIndex) {
-                second = TRUE;
+                second = true;
                 endOffset = ((Size) pointer) - ((Size) bytes);
                 break;
             }
@@ -2065,7 +2064,7 @@ SuperString::UTF8::rangeIndexes(
     }
     if(!second) {
         if(i == endIndex) {
-            second = TRUE;
+            second = true;
             endOffset = ((Size) pointer) - ((Size) bytes);
         }
     }
