@@ -6,11 +6,6 @@
 // std
 #include <iostream> // The only thing we need, and just for printing
 
-// in case NULL is not defined
-#ifndef NULL
-#define NULL (0L)
-#endif // NULL
-
 /*-- declarations --*/
 
 /**
