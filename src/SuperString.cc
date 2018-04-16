@@ -2,7 +2,8 @@
 
 #include <SuperString.hh>
 // std
-#include <iostream> // The only thing we need, and just for printing
+#include <iostream>
+#include <algorithm>
 
 /*-- definitions --*/
 
@@ -389,7 +390,7 @@ SuperString::Size SuperString::ConstASCIISequence::keepingCost() const {
 
 void SuperString::ConstASCIISequence::doDelete() const {
     ConstASCIISequence *self = ((ConstASCIISequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -403,17 +404,13 @@ bool SuperString::ConstASCIISequence::isToBeDeleted() const {
 SuperString::CopyASCIISequence::CopyASCIISequence(const SuperString::Byte *bytes) {
     this->_length = SuperString::ASCII::length(bytes);
     this->_data = new Byte[this->_length + 1];
-    for(Size i = 0; i <= this->_length; i++) {
-        *(this->_data + i) = *(bytes + i);
-    }
+    std::copy_n(bytes, this->_length + 1, this->_data);
 }
 
 SuperString::CopyASCIISequence::CopyASCIISequence(const SuperString::ConstASCIISequence *sequence) {
     this->_length = sequence->length();
     this->_data = new Byte[this->_length + 1];
-    for(Size i = 0; i <= this->_length; i++) {
-        *(this->_data + i) = *(sequence->_bytes + i);
-    }
+    std::copy_n(sequence->_bytes, this->_length + 1, this->_data);
 }
 
 SuperString::CopyASCIISequence::~CopyASCIISequence() {
@@ -481,7 +478,7 @@ SuperString::Size SuperString::CopyASCIISequence::keepingCost() const {
 
 void SuperString::CopyASCIISequence::doDelete() const {
     CopyASCIISequence *self = ((CopyASCIISequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -583,7 +580,7 @@ SuperString::Size SuperString::ConstUTF8Sequence::keepingCost() const {
 
 void SuperString::ConstUTF8Sequence::doDelete() const {
     ConstUTF8Sequence *self = ((ConstUTF8Sequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -599,9 +596,7 @@ SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const SuperString::Byte *bytes) 
     this->_length = lengthAndMemoryLength.first();
     this->_memoryLength = lengthAndMemoryLength.second();
     this->_data = new Byte[this->_memoryLength];
-    for(Size i = 0; i < this->_memoryLength; i++) {
-        *(this->_data + i) = *(bytes + i);
-    }
+    std::copy_n(bytes, this->_memoryLength, this->_data);
 }
 
 SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const SuperString::ConstUTF8Sequence *sequence) {
@@ -609,9 +604,7 @@ SuperString::CopyUTF8Sequence::CopyUTF8Sequence(const SuperString::ConstUTF8Sequ
     this->_length = lengthAndMemoryLength.first();
     this->_memoryLength = lengthAndMemoryLength.second();
     this->_data = new Byte[this->_memoryLength];
-    for(Size i = 0; i < this->_memoryLength; i++) {
-        *(this->_data + i) = *(sequence->_bytes + i);
-    }
+    std::copy_n(sequence->_bytes, this->_memoryLength, this->_data);
 }
 
 SuperString::CopyUTF8Sequence::~CopyUTF8Sequence() {
@@ -697,7 +690,7 @@ SuperString::Size SuperString::CopyUTF8Sequence::keepingCost() const {
 
 void SuperString::CopyUTF8Sequence::doDelete() const {
     CopyUTF8Sequence *self = ((CopyUTF8Sequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -802,7 +795,7 @@ SuperString::Size SuperString::ConstUTF16BESequence::keepingCost() const {
 
 void SuperString::ConstUTF16BESequence::doDelete() const {
     ConstUTF16BESequence *self = ((ConstUTF16BESequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -818,9 +811,7 @@ SuperString::CopyUTF16BESequence::CopyUTF16BESequence(const SuperString::Byte *b
     this->_length = lengthAndMemoryLength.first();
     this->_memoryLength = lengthAndMemoryLength.second();
     this->_data = new Byte[this->_memoryLength];
-    for(Size i = 0; i < this->_memoryLength; i++) {
-        *(this->_data + i) = *(bytes + i);
-    }
+    std::copy_n(bytes, this->_memoryLength, this->_data);
 }
 
 SuperString::CopyUTF16BESequence::CopyUTF16BESequence(const SuperString::ConstUTF16BESequence *sequence) {
@@ -828,9 +819,7 @@ SuperString::CopyUTF16BESequence::CopyUTF16BESequence(const SuperString::ConstUT
     this->_length = lengthAndMemoryLength.first();
     this->_memoryLength = lengthAndMemoryLength.second();
     this->_data = new Byte[this->_memoryLength];
-    for(Size i = 0; i < this->_memoryLength; i++) {
-        *(this->_data + i) = *(sequence->_bytes + i);
-    }
+    std::copy_n(sequence->_bytes, this->_memoryLength, this->_data);
 }
 
 SuperString::CopyUTF16BESequence::~CopyUTF16BESequence() {
@@ -917,7 +906,7 @@ SuperString::Size SuperString::CopyUTF16BESequence::keepingCost() const {
 
 void SuperString::CopyUTF16BESequence::doDelete() const {
     CopyUTF16BESequence *self = ((CopyUTF16BESequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -999,7 +988,7 @@ SuperString::Size SuperString::ConstUTF32Sequence::keepingCost() const {
 
 void SuperString::ConstUTF32Sequence::doDelete() const {
     ConstUTF32Sequence *self = ((ConstUTF32Sequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_status = Status::ToBeDestructed; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -1013,17 +1002,13 @@ bool SuperString::ConstUTF32Sequence::isToBeDeleted() const {
 SuperString::CopyUTF32Sequence::CopyUTF32Sequence(const SuperString::Byte *bytes) {
     this->_length = SuperString::UTF32::length(bytes);
     this->_data = new int[this->_length + 1];
-    for(Size i = 0; i <= this->_length; i++) {
-        *(this->_data + i) = *(((const int *) bytes) + i);
-    }
+    std::copy_n(bytes, this->_length + 1, this->_data);
 }
 
 SuperString::CopyUTF32Sequence::CopyUTF32Sequence(const SuperString::ConstUTF32Sequence *sequence) {
     this->_length = SuperString::UTF32::length(((const Byte *) sequence->_bytes));
     this->_data = new int[this->_length + 1];
-    for(Size i = 0; i <= this->_length; i++) {
-        *(this->_data + i) = *(sequence->_bytes + i);
-    }
+    std::copy_n(sequence->_bytes, this->_length + 1, this->_data);
 }
 
 SuperString::CopyUTF32Sequence::~CopyUTF32Sequence() {
@@ -1091,7 +1076,7 @@ SuperString::Size SuperString::CopyUTF32Sequence::keepingCost() const {
 
 void SuperString::CopyUTF32Sequence::doDelete() const {
     CopyUTF32Sequence *self = ((CopyUTF32Sequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_length = 0; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -1278,7 +1263,7 @@ void SuperString::SubstringSequence::reconstruct(const StringSequence *sequence)
 
 void SuperString::SubstringSequence::doDelete() const {
     SubstringSequence *self = ((SubstringSequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_kind = (Kind) (((char) self->kind()) + 0b10000000); // Just a trick, we don't want any more variable
         delete self;
     }
@@ -1662,7 +1647,7 @@ void SuperString::ConcatenationSequence::reconstruct(const StringSequence *seque
 
 void SuperString::ConcatenationSequence::doDelete() const {
     ConcatenationSequence *self = ((ConcatenationSequence *) (Size) this);
-    if(this->isToBeDeleted() == false) {
+    if(!this->isToBeDeleted()) {
         *((char *) &self->_kind) = ((char) self->kind()) + 0b10000000; // Just a trick, we don't want any more variable
         delete self;
     }
@@ -1761,7 +1746,7 @@ bool SuperString::MultipleSequence::print(std::ostream &stream, SuperString::Siz
             for(Size i = 0; i < this->_container._multiple._time; i++) {
                 Size iterationStartIndex = i * unitLength;
                 Size iterationEndIndex = (i + 1) * unitLength;
-                if(printing == false) {
+                if(!printing) {
                     if(iterationStartIndex <= startIndex) {
                         if(endIndex < iterationEndIndex) {
                             this->_container._multiple._sequence->print(stream, startIndex - iterationStartIndex,
@@ -1787,7 +1772,7 @@ bool SuperString::MultipleSequence::print(std::ostream &stream, SuperString::Siz
             for(Size i = 0; i < this->_container._reconstructed._time; i++) {
                 Size iterationStartIndex = i * unitLength;
                 Size iterationEndIndex = (i + 1) * unitLength;
-                if(printing == false) {
+                if(!printing) {
                     if(iterationStartIndex <= startIndex) {
                         if(endIndex < iterationEndIndex) {
                             SuperString::UTF32::print(stream, (const Byte *) this->_container._reconstructed._data,
@@ -1894,7 +1879,7 @@ void SuperString::MultipleSequence::reconstruct(const StringSequence *sequence) 
 
 void SuperString::MultipleSequence::doDelete() const {
     MultipleSequence *self = ((MultipleSequence *) (Size) this);
-    if(self->isToBeDeleted() == false) {
+    if(!self->isToBeDeleted()) {
         self->_kind = (Kind) (((char) self->kind()) + 0b10000000); // Just a trick, we don't want any more variable
         delete self;
     }
