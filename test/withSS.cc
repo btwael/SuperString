@@ -19,8 +19,8 @@ int main() {
     free(content);
 
     std::vector<SuperString> lines;
-    SuperString::Size last = 0;
-    for(SuperString::Size i = 0, length = string.length(); i < length; i++) {
+    std::size_t last = 0;
+    for(std::size_t i = 0, length = string.length(); i < length; i++) {
         int c = string.codeUnitAt(i).ok();
         if(c == '\n') {
             lines.push_back(string.substring(last, i).ok());

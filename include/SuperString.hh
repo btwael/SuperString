@@ -4,7 +4,8 @@
 /*-- imports --*/
 
 // std
-#include <iostream> // The only thing we need, and just for printing
+#include <cstddef>
+#include <iostream>
 
 /*-- declarations --*/
 
@@ -43,12 +44,6 @@ public:
      * An unsigned 8-bit type, mainly to represent raw data.
      */
     typedef unsigned char Byte;
-
-    //*-- Size
-    /**
-     * `Size` is an unsigned long type used to represent indexes and offsets..
-     */
-    typedef unsigned long Size;
 
     //*-- Result<T, E>
     /**
@@ -150,14 +145,14 @@ public:
     /**
      * Returns the length of this string.
      */
-    SuperString::Size length() const;
+    std::size_t length() const;
 
     //*- Methods
 
     /**
      * Returns the 32-bit code unit at the given index.
      */
-    SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const;
+    SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const;
 
     /**
      * Compares this to [other].
@@ -181,7 +176,7 @@ public:
      * from [startIndex], inclusive, to [endIndex], exclusive.
      */
     SuperString::Result<SuperString, SuperString::Error>
-    substring(SuperString::Size startIndex, SuperString::Size endIndex) const;
+    substring(std::size_t startIndex, std::size_t endIndex) const;
 
     /**
      * Outputs the whole string to the given [stream].
@@ -192,7 +187,7 @@ public:
      * Outputs the substring from [startIndex] to [endIndex]
      * to the given [stream].
      */
-    bool print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const;
+    bool print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const;
 
     /**
      * Returns the string without any leading and trailing whitespace.
@@ -210,9 +205,9 @@ public:
     SuperString trimRight() const;
 
     // TODO: delete this two methods
-    SuperString::Size keepingCost() const;
+    std::size_t keepingCost() const;
 
-    SuperString::Size freeingCost() const;
+    std::size_t freeingCost() const;
 
     //*- Operators
 
@@ -225,7 +220,7 @@ public:
      * Creates a new string by concatenating this string with itself a
      * number of [times].
      */
-    SuperString operator*(Size times) const;
+    SuperString operator*(std::size_t times) const;
 
     /**
      * Assigns [other] to this string.
@@ -319,7 +314,7 @@ private:
 
         //*- Getters
 
-        SuperString::Size length() const;
+        std::size_t length() const;
 
         //*- Methods
 
@@ -368,7 +363,7 @@ private:
     //*-- StringSequence (abstract|internal)
     class StringSequence {
     private:
-        SuperString::Size _refCount;
+        std::size_t _refCount;
         SingleLinkedList<ReferenceStringSequence *> _referencers;
 
     public:
@@ -398,14 +393,14 @@ private:
         /**
          * Returns the length of this sequence.
          */
-        virtual SuperString::Size length() const = 0;
+        virtual std::size_t length() const = 0;
 
         //*- Methods
 
         /**
          * Returns the 32-bit code unit at the given index.
          */
-        virtual SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const = 0;
+        virtual SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const = 0;
 
         SuperString::Result<int, SuperString::Error> indexOf(SuperString other) const;
 
@@ -416,7 +411,7 @@ private:
          * from [startIndex], inclusive, to [endIndex], exclusive.
          */
         virtual SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
+        substring(std::size_t startIndex, std::size_t endIndex) const = 0;
 
         /**
          * Prints this string to the given [stream].
@@ -428,7 +423,7 @@ private:
          * and end at [endIndex], exclusive, to given [stream].
          */
         virtual bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const = 0;
 
         /**
          * Returns the sequence without any leading and trailing whitespace.
@@ -446,19 +441,19 @@ private:
         virtual SuperString trimRight() const = 0;
 
         // TODO: comment
-        virtual SuperString::Size keepingCost() const = 0;
+        virtual std::size_t keepingCost() const = 0;
 
         // TODO: comment
-        SuperString::Size freeingCost() const;
+        std::size_t freeingCost() const;
 
         // TODO: comment
         void refAdd() const;
 
         // TODO: comment
-        SuperString::Size refRelease() const;
+        std::size_t refRelease() const;
 
         // TODO: comment
-        SuperString::Size refCount() const;
+        std::size_t refCount() const;
 
         // TODO: comment
         void addReferencer(SuperString::ReferenceStringSequence *sequence) const;
@@ -475,7 +470,7 @@ private:
         virtual bool isToBeDeleted() const = 0;
 
     private:
-        bool _substringMatches(SuperString::Size startIndex, SuperString other) const;
+        bool _substringMatches(std::size_t startIndex, SuperString other) const;
 
         friend class SuperString;
     };
@@ -493,19 +488,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        virtual SuperString::Size length() const = 0 /*override*/;
+        virtual std::size_t length() const = 0 /*override*/;
 
         //*- Methods
 
-        virtual SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const = 0 /*override*/;
+        virtual SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const = 0 /*override*/;
 
         virtual SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const = 0 /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const = 0 /*override*/;
 
         virtual bool print(std::ostream &stream) const = 0 /*override*/;
 
         virtual bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const = 0 /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const = 0 /*override*/;
 
         virtual SuperString trim() const = 0 /*override*/;
 
@@ -513,12 +508,12 @@ private:
 
         virtual SuperString trimRight() const = 0 /*override*/;
 
-        virtual SuperString::Size keepingCost() const = 0 /*override*/;
+        virtual std::size_t keepingCost() const = 0 /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
         // TODO: comment
-        virtual SuperString::Size reconstructionCost(const StringSequence *sequence) const = 0;
+        virtual std::size_t reconstructionCost(const StringSequence *sequence) const = 0;
 
         // TODO: comment
         virtual void reconstruct(const StringSequence *sequence) const = 0;
@@ -539,7 +534,7 @@ private:
         };
 
         const Byte *_bytes;
-        SuperString::Size _length;
+        std::size_t _length;
         Status _status;
 
     public:
@@ -557,19 +552,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -577,9 +572,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
         friend class CopyASCIISequence;
 
@@ -593,7 +588,7 @@ private:
     class CopyASCIISequence: public StringSequence {
     private:
         Byte *_data;
-        SuperString::Size _length;
+        std::size_t _length;
 
     public:
         //*- Constructors
@@ -612,19 +607,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -632,9 +627,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
     protected:
         void doDelete() const;
@@ -652,7 +647,7 @@ private:
         };
 
         const Byte *_bytes;
-        SuperString::Size _length;
+        std::size_t _length;
         Status _status;
 
     public:
@@ -670,19 +665,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -690,9 +685,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited:SuperString:: Size freeingCost() const;
+        // inherited:SuperString:: std::size_t freeingCost() const;
 
         friend class CopyUTF8Sequence;
 
@@ -706,8 +701,8 @@ private:
     class CopyUTF8Sequence: public StringSequence {
     private:
         Byte *_data;
-        SuperString::Size _length;
-        SuperString::Size _memoryLength;
+        std::size_t _length;
+        std::size_t _memoryLength;
 
     public:
         //*- Constructors
@@ -726,19 +721,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -746,9 +741,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
     protected:
         void doDelete() const;
@@ -766,7 +761,7 @@ private:
         };
 
         const Byte *_bytes;
-        SuperString::Size _length;
+        std::size_t _length;
         Status _status;
 
     public:
@@ -784,19 +779,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -804,9 +799,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited:SuperString:: Size freeingCost() const;
+        // inherited:SuperString:: std::size_t freeingCost() const;
 
         friend class CopyUTF16BESequence;
 
@@ -820,8 +815,8 @@ private:
     class CopyUTF16BESequence: public StringSequence {
     private:
         Byte *_data;
-        SuperString::Size _length;
-        SuperString::Size _memoryLength;
+        std::size_t _length;
+        std::size_t _memoryLength;
 
     public:
         //*- Constructors
@@ -840,19 +835,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -860,9 +855,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
     protected:
         void doDelete() const;
@@ -880,7 +875,7 @@ private:
         };
 
         const int *_bytes;
-        SuperString::Size _length;
+        std::size_t _length;
         Status _status;
 
     public:
@@ -898,19 +893,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -918,9 +913,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
         friend class CopyUTF32Sequence;
 
@@ -934,7 +929,7 @@ private:
     class CopyUTF32Sequence: public StringSequence {
     private:
         int *_data;
-        SuperString::Size _length;
+        std::size_t _length;
 
     public:
         //*- Constructors
@@ -953,19 +948,19 @@ private:
 
         // inherited: bool isNotEmpty() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -973,9 +968,9 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
     protected:
         void doDelete() const;
@@ -992,12 +987,12 @@ private:
         };
         struct SubstringMetaInfo {
             const StringSequence *_sequence;
-            Size _startIndex;
-            Size _endIndex;
+            std::size_t _startIndex;
+            std::size_t _endIndex;
         };
         struct ReconstructedMetaInfo {
             int *_data;
-            Size _length;
+            std::size_t _length;
         };
 
         Kind _kind;
@@ -1009,7 +1004,7 @@ private:
     public:
         //*- Constructors
 
-        SubstringSequence(const StringSequence *sequence, SuperString::Size startIndex, SuperString::Size endIndex);
+        SubstringSequence(const StringSequence *sequence, std::size_t startIndex, std::size_t endIndex);
 
         //*- Destructor
 
@@ -1019,19 +1014,19 @@ private:
 
         SuperString::SubstringSequence::Kind kind() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -1039,11 +1034,11 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
-        SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
+        std::size_t reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
 
@@ -1071,16 +1066,16 @@ private:
         struct LeftReconstructedMetaInfo {
             const StringSequence *_right;
             int *_leftData;
-            Size _leftLength;
+            std::size_t _leftLength;
         };
         struct RightReconstructedMetaInfo {
             const StringSequence *_left;
             int *_rightData;
-            Size _rightLength;
+            std::size_t _rightLength;
         };
         struct ReconstructedMetaInfo {
             int *_data;
-            Size _length;
+            std::size_t _length;
         };
 
         Kind _kind;
@@ -1104,19 +1099,19 @@ private:
 
         SuperString::ConcatenationSequence::Kind kind() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -1124,11 +1119,11 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
-        SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
+        std::size_t reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
 
@@ -1142,13 +1137,13 @@ private:
     class MultipleSequence: public ReferenceStringSequence {
     private:
         struct MultipleMetaInfo {
-            Size _time;
+            std::size_t _time;
             const StringSequence *_sequence;
         };
         struct ReconstructedMetaInfo {
-            Size _time;
+            std::size_t _time;
             int *_data;
-            Size _dataLength;
+            std::size_t _dataLength;
         };
         enum class Kind {
             MULTIPLE,
@@ -1164,7 +1159,7 @@ private:
     public:
         //*- Constructors
 
-        MultipleSequence(const StringSequence *sequence, Size time);
+        MultipleSequence(const StringSequence *sequence, std::size_t time);
 
         //*- Destructor
 
@@ -1174,19 +1169,19 @@ private:
 
         SuperString::MultipleSequence::Kind kind() const;
 
-        SuperString::Size length() const /*override*/;
+        std::size_t length() const /*override*/;
 
         //*- Methods
 
-        SuperString::Result<int, SuperString::Error> codeUnitAt(SuperString::Size index) const /*override*/;
+        SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const /*override*/;
 
         SuperString::Result<SuperString, SuperString::Error>
-        substring(SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        substring(std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         bool print(std::ostream &stream) const /*override*/;
 
         bool
-        print(std::ostream &stream, SuperString::Size startIndex, SuperString::Size endIndex) const /*override*/;
+        print(std::ostream &stream, std::size_t startIndex, std::size_t endIndex) const /*override*/;
 
         SuperString trim() const /*override*/;
 
@@ -1194,11 +1189,11 @@ private:
 
         SuperString trimRight() const /*override*/;
 
-        SuperString::Size keepingCost() const /*override*/;
+        std::size_t keepingCost() const /*override*/;
 
-        // inherited: SuperString::Size freeingCost() const;
+        // inherited: std::size_t freeingCost() const;
 
-        SuperString::Size reconstructionCost(const StringSequence *sequence) const /*override*/;
+        std::size_t reconstructionCost(const StringSequence *sequence) const /*override*/;
 
         void reconstruct(const StringSequence *sequence) const /*override*/;
 
@@ -1213,84 +1208,84 @@ private:
     //
     class ASCII {
     public:
-        static SuperString::Size length(const SuperString::Byte *bytes);
+        static std::size_t length(const SuperString::Byte *bytes);
 
-        static int codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+        static int codeUnitAt(const SuperString::Byte *bytes, std::size_t index);
 
         static void print(std::ostream &stream, const SuperString::Byte *bytes);
 
-        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
-                          SuperString::Size endIndex);
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, std::size_t startIndex,
+                          std::size_t endIndex);
 
-        static SuperString::Pair<SuperString::Size, SuperString::Size>
-        trim(const SuperString::Byte *bytes, SuperString::Size length);
+        static SuperString::Pair<std::size_t, std::size_t>
+        trim(const SuperString::Byte *bytes, std::size_t length);
 
-        static SuperString::Size trimLeft(const SuperString::Byte *bytes);
+        static std::size_t trimLeft(const SuperString::Byte *bytes);
 
-        static SuperString::Size trimRight(const SuperString::Byte *bytes, SuperString::Size length);
+        static std::size_t trimRight(const SuperString::Byte *bytes, std::size_t length);
     };
 
     class UTF8 {
     public:
-        static SuperString::Size length(const SuperString::Byte *bytes);
+        static std::size_t length(const SuperString::Byte *bytes);
 
-        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        static SuperString::Pair<std::size_t, std::size_t>
         lengthAndMemoryLength(const SuperString::Byte *bytes);
 
         static SuperString::Result<int, SuperString::Error>
-        codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+        codeUnitAt(const SuperString::Byte *bytes, std::size_t index);
 
         static void print(std::ostream &stream, const SuperString::Byte *bytes);
 
-        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
-                          SuperString::Size endIndex);
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, std::size_t startIndex,
+                          std::size_t endIndex);
 
-        static SuperString::Result<SuperString::Pair<SuperString::Size, SuperString::Size>, SuperString::Error>
-        rangeIndexes(const SuperString::Byte *bytes, SuperString::Size startIndex, SuperString::Size endIndex);
+        static SuperString::Result<SuperString::Pair<std::size_t, std::size_t>, SuperString::Error>
+        rangeIndexes(const SuperString::Byte *bytes, std::size_t startIndex, std::size_t endIndex);
 
-        static SuperString::Pair<SuperString::Byte *, SuperString::Size> codeUnitToChar(int c);
+        static SuperString::Pair<SuperString::Byte *, std::size_t> codeUnitToChar(int c);
 
         // TODO: add customized trims methods
     };
 
     class UTF16BE {
     public:
-        static SuperString::Size length(const SuperString::Byte *bytes);
+        static std::size_t length(const SuperString::Byte *bytes);
 
-        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        static SuperString::Pair<std::size_t, std::size_t>
         lengthAndMemoryLength(const SuperString::Byte *bytes);
 
         static SuperString::Result<int, SuperString::Error>
-        codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+        codeUnitAt(const SuperString::Byte *bytes, std::size_t index);
 
-        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size length);
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, std::size_t length);
 
-        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
-                          SuperString::Size endIndex);
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, std::size_t startIndex,
+                          std::size_t endIndex);
 
         // TODO: add customized trims methods
     };
 
     class UTF32 {
     public:
-        static SuperString::Size length(const SuperString::Byte *bytes);
+        static std::size_t length(const SuperString::Byte *bytes);
 
-        static SuperString::Pair<SuperString::Size, SuperString::Size>
+        static SuperString::Pair<std::size_t, std::size_t>
         lengthAndMemoryLength(const SuperString::Byte *bytes);
 
-        static int codeUnitAt(const SuperString::Byte *bytes, SuperString::Size index);
+        static int codeUnitAt(const SuperString::Byte *bytes, std::size_t index);
 
         static void print(std::ostream &stream, const SuperString::Byte *bytes);
 
-        static void print(std::ostream &stream, const SuperString::Byte *bytes, SuperString::Size startIndex,
-                          SuperString::Size endIndex);
+        static void print(std::ostream &stream, const SuperString::Byte *bytes, std::size_t startIndex,
+                          std::size_t endIndex);
 
-        static SuperString::Pair<SuperString::Size, SuperString::Size>
-        trim(const SuperString::Byte *bytes, SuperString::Size length);
+        static SuperString::Pair<std::size_t, std::size_t>
+        trim(const SuperString::Byte *bytes, std::size_t length);
 
-        static SuperString::Size trimLeft(const SuperString::Byte *bytes);
+        static std::size_t trimLeft(const SuperString::Byte *bytes);
 
-        static SuperString::Size trimRight(const SuperString::Byte *bytes, SuperString::Size length);
+        static std::size_t trimRight(const SuperString::Byte *bytes, std::size_t length);
     };
 };
 
@@ -1418,8 +1413,8 @@ SuperString::SingleLinkedList<E>::~SingleLinkedList() {
 }
 
 template<class E>
-SuperString::Size SuperString::SingleLinkedList<E>::length() const {
-    Size length = 0;
+std::size_t SuperString::SingleLinkedList<E>::length() const {
+    std::size_t length = 0;
     Node<E> *node = this->_head;
     while(node != NULL) {
         length++;

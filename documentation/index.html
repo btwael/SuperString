@@ -86,7 +86,6 @@
                                     <a href="#c-api-types-encoding"><li>SuperString::Encoding</li></a>
                                     <a href="#c-api-types-error"><li>SuperString::Error</li></a>
                                     <a href="#c-api-types-byte"><li>SuperString::Byte</li></a>
-                                    <a href="#c-api-types-size"><li>SuperString::Size</li></a>
                                     <a href="#c-api-types-result"><li>SuperString::Result&lt;T, E></li></a>
                                 </ol>
                             </li></a>
@@ -220,14 +219,15 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3" id="c-api-methods-codeunitat">codeUnitAt(index)</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;<a class="keyword">int</a>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">codeUnitAt</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> index) <span class="modifier">const</span>;
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;<a class="keyword">int</a>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">codeUnitAt</span>(std::<span class="keyword">size_t</span> index) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the code unit at the given index, if index is less than the length of the string, if not, it returns <span class="inlinehl">SuperString::Error::RangeError</span>.</p>
                 <pre><code class="language-cpp">#include &lt;iostream>
+#include &lt;cstddef>
 #include "SuperString.hh"
 
 int main(int argc, char const *argv[]) {
-    SuperString::Result<int, SuperString::Error> res;
+    SuperString::Result&lt;int, SuperString::Error> res;
     SuperString s = SuperString::Const("SuperString is fast!");
 
     res = s.codeUnitAt(1);
@@ -242,7 +242,7 @@ int main(int argc, char const *argv[]) {
         std::cout << "Range error\n";
     }
 
-    for(SuperString::Size i = 0; i < s.length(); i++) {
+    for(std::size_t i = 0; i < s.length(); i++) {
         std::cout << s.codeUnitAt(i).ok() << "\n"; // sometime it's just safe
     }
     return 0;
@@ -251,14 +251,14 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> indexOf() -->
                 <h3 class="content-subhead3" id="c-api-methods-indexof">indexOf(pattern)</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;int, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">indexOf</span>(SuperString other) <span class="modifier">const</span>;
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;std::<span class="keyword">size_t</span>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">indexOf</span>(SuperString other) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the position of the first occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
                 <pre><code class="language-cpp">#include &lt;iostream>
 #include "SuperString.hh"
 
 int main(int argc, char const *argv[]) {
-    SuperString::Result<int, SuperString::Error> res;
+    SuperString::Result&lt;std::size_t, SuperString::Error> res;
     SuperString s = SuperString::Const("SuperString is fast and fast!");
 
     res = s.indexOf(SuperString::Const("fast"));
@@ -314,14 +314,14 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3" id="c-api-methods-lastindexof">lastIndexOf(pattern)</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;int, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">lastIndexOf</span>(SuperString other) <span class="modifier">const</span>;
+                    SuperString::<a class="keyword" href="#c-api-types-result">Result</a>&lt;std::<span class="keyword">size_t</span>, SuperString::<a class="keyword" href="#c-api-types-error">Error</a>> <span class="token">lastIndexOf</span>(SuperString other) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the position of the last occurrence of other in this string, if not found, it returns <span class="inlinehl">SuperString::Error::NotFound</span>.</p>
                 <pre><code class="language-cpp">#include &lt;iostream>
 #include "SuperString.hh"
 
 int main(int argc, char const *argv[]) {
-    SuperString::Result&lt;int, SuperString::Error> res;
+    SuperString::Result&lt;std::size_t, SuperString::Error> res;
     SuperString s = SuperString::Const("SuperString is fast and fast!");
 
     res = s.lastIndexOf(SuperString::Const("fast"));
@@ -337,7 +337,7 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> length() -->
                 <h3 class="content-subhead3" id="c-api-methods-length">length()</h3>
                 <div class="func-prototype">
-                    SuperString::<a class="keyword" href="#c-api-types-size">Size</a> <span class="token">length</span>() <span class="modifier">const</span>;
+                    std::<span class="keyword">size_t</span> <span class="token">length</span>() <span class="modifier">const</span>;
                 </div>
                 <p>Returns the length of this string.</p>
                 <pre><code class="language-cpp">#include &lt;iostream>
@@ -379,7 +379,7 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> print() -->
                 <h3 class="content-subhead3" id="c-api-methods-print2">print(stream, startIndex, endIndex)</h3>
                 <div class="func-prototype">
-                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> startIndex, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> endIndex) <span class="modifier">const</span>;
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">print</span>(std::ostream &amp;stream, std::<span class="keyword">size_t</span> startIndex, std::<span class="keyword">size_t</span> endIndex) <span class="modifier">const</span>;
                 </div>
                 <p>Prints a substring of this string that starts at startIndex, inclusive and end at endIndex, exclusive.</p>
                 <pre><code class="language-cpp">#include &lt;iostream>
@@ -395,7 +395,7 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> methods -> codeUnitAt() -->
                 <h3 class="content-subhead3" id="c-api-methods-substring">substring(startIndex, endIndex)</h3>
                 <div class="func-prototype">
-                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">substring</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> startIndex, SuperString::<a class="keyword" href="#c-api-types-size">Size</a> endIndex) <span class="modifier">const</span>;
+                    <a class="keyword" href="#c-api-types-size">void</a> <span class="token">substring</span>(std::<span class="keyword">size_t</span> startIndex, std::<span class="keyword">size_t</span> endIndex) <span class="modifier">const</span>;
                 </div>
                 <p>Returns the substring of this string that extends from startIndex, inclusive, to endIndex, exclusive.</p>
                 <pre><code class="language-cpp">#include &lt;iostream>
@@ -471,7 +471,7 @@ int main(int argc, char const *argv[]) {
                 <!-- API -> operators -> * -->
                 <h3 class="content-subhead3" id="c-api-operators-time">operator *</h3>
                 <div class="func-prototype">
-                    SuperString <span class="token">operator*</span>(SuperString::<a class="keyword" href="#c-api-types-size">Size</a> times) <span class="modifier">const</span>;
+                    SuperString <span class="token">operator*</span>(std::<span class="keyword">size_t</span> times) <span class="modifier">const</span>;
                 </div>
                 <p>Creates a new string that concatenate this string with itself a number of times.</p>
                 <pre><code class="language-cpp">#include &lt;iostream>
@@ -550,16 +550,6 @@ int main(int argc, char const *argv[]) {
 };
 </code></pre>
 
-                <!-- API -> types -> size -->
-                <h3 class="content-subhead3" id="c-api-types-size">SuperString::Size</h3>
-                <p>This type is defined as fellow:</p>
-                <pre><code class="language-cpp">class SuperString {
-...
-    typedef unsigned long Byte;
-...
-};
-</code></pre>
-
                 <!-- API -> types -> result -->
                 <h3 class="content-subhead3" id="c-api-types-result">SuperString::Result&lt;T, E></h3>
                 <p>This type is inspired from Rust type <span class="inlinehl">std::Result&lt;T, E></span>, and defined as:</p>
@@ -576,7 +566,7 @@ int main(int argc, char const *argv[]) {
 
         Result(E err);
 
-        Result(const SuperString::Result<T, E> &amp;other) /*copy*/;
+        Result(const SuperString::Result&lt;T, E> &amp;other) /*copy*/;
 
         ~Result();
 
