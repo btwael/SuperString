@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <iostream>
+#include <stdexcept>
 
 /*-- definitions --*/
 
@@ -90,7 +91,23 @@ SuperString::substring(std::size_t startIndex, std::size_t endIndex) const {
     if(this->_sequence != NULL) {
         return this->_sequence->substring(startIndex, endIndex);
     }
-    return Result<SuperString, Error>(Error::Unexpected);
+    return Result<SuperString, Error>(Error::RangeError);
+}
+
+SuperString SuperString::substr(std::size_t pos, std::size_t len) const {
+    SuperString::Result<SuperString, SuperString::Error> result = this->substring(pos, pos + len);
+    if(result.isErr()) {
+        throw std::out_of_range("");
+    }
+    return result.ok();
+}
+
+SuperString SuperString::substr(std::size_t pos) const {
+    SuperString::Result<SuperString, SuperString::Error> result = this->substring(pos, this->length() - pos);
+    if(result.isErr()) {
+        throw std::out_of_range("");
+    }
+    return result.ok();
 }
 
 bool SuperString::print(std::ostream &stream) const {

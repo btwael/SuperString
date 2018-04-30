@@ -163,13 +163,13 @@ public:
      * Returns the position of the first occurrence of [other] in this string,
      * if not found, it returns SuperString::Error::NotFound.
      */
-    SuperString::Result<int, SuperString::Error> indexOf(SuperString other) const;
+    SuperString::Result<std::size_t, SuperString::Error> indexOf(SuperString other) const;
 
     /**
      * Returns the position of the last occurrence of [other] in this string,
      * if not found, returns SuperString::Error::NotFound.
      */
-    SuperString::Result<int, SuperString::Error> lastIndexOf(SuperString other) const;
+    SuperString::Result<std::size_t, SuperString::Error> lastIndexOf(SuperString other) const;
 
     /**
      * Returns the substring of this sequence that extends
@@ -177,6 +177,9 @@ public:
      */
     SuperString::Result<SuperString, SuperString::Error>
     substring(std::size_t startIndex, std::size_t endIndex) const;
+
+    SuperString substr(std::size_t pos, std::size_t len) const;
+    SuperString substr(std::size_t pos) const;
 
     /**
      * Outputs the whole string to the given [stream].
@@ -402,9 +405,9 @@ private:
          */
         virtual SuperString::Result<int, SuperString::Error> codeUnitAt(std::size_t index) const = 0;
 
-        SuperString::Result<int, SuperString::Error> indexOf(SuperString other) const;
+        SuperString::Result<std::size_t, SuperString::Error> indexOf(SuperString other) const;
 
-        SuperString::Result<int, SuperString::Error> lastIndexOf(SuperString other) const;
+        SuperString::Result<std::size_t, SuperString::Error> lastIndexOf(SuperString other) const;
 
         /**
          * Returns the substring of this sequence that extends
