@@ -24,7 +24,5 @@ SuperString uses Rope (data structure) and optimization techniques.
 ## Contribute and support
 You have any feature idea, a bug to correct or an improvement, feel free to [open a issue]( https://github.com/btwael/SuperString/issues) or [send your pull request](https://github.com/btwael/SuperString/pulls).
 
-You can also support the author of SuperString via [Patreon](https://www.patreon.com/btwael) or [Paypal](https://www.paypal.me/btwael).
-
 ## LICENCE
 MIT LICENCE
