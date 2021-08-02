@@ -5,7 +5,7 @@ SuperString uses Rope (data structure) and optimization techniques.
 
 ## Features
 - **Fast** and **Memory-optimized**.
-- Automatically **garabage collected**.
+- Automatically **garbage collected**.
 - Support **ASCII**, **UTF-8**, **UTF-16BE** and **UTF-32**.
 - Rich API.
 - Easy to integrate and use.
@@ -14,7 +14,7 @@ SuperString uses Rope (data structure) and optimization techniques.
 ## Roadmap
 - [ ] Optimize even more (I think it's possible :sunglasses:)
 - [ ] Support for LE version of UTF-16 (UTF-16LE)
-- [ ] Enrich test and benchmark case, compares with existing Rope and other libraries 
+- [ ] Enrich test and benchmark case, compares with existing Rope and other libraries
 - [ ] Test on Windows and other platforms
 - [ ] Test on multithreaded environment
 
